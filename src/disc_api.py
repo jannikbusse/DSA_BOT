@@ -19,7 +19,6 @@ async def on_ready():
 
 @client.event #receive msg event callback -----------------------
 async def on_message(message):
-    print("msg")
     if message.author == client.user:
         return   
     await received_msg(message)

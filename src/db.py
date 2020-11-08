@@ -9,6 +9,13 @@ t_count = 0
 q = queue.Queue() #queue for access calls
 
 
+def check_char_exists(c, uID, charname):
+    cID = str(uID) + str(charname)
+    c.execute("SELECT EXISTS(SELECT * FROM chartable WHERE cID=?)", (cID,))
+    if(c.fetchone()[0]):
+        return True
+    return False     
+
 def remove_prefix(text, prefix):
     return text[text.startswith(prefix) and len(prefix):]
 
@@ -21,11 +28,10 @@ def createTable(c):
                 (cID PRIMARY KEY, uID, mu, kl, int, ch, ff, ge, ko, kk)''') #int = in!!!!!
 
 
-def registerChar(c, conn, user, charname):
+def db_register_char(c, conn, user, charname):
     cID = user + charname
 
-    c.execute("SELECT EXISTS(SELECT * FROM chartable WHERE cID=?)", (cID,))
-    if(c.fetchone()[0]):       
+    if (check_char_exists(c, user, charname)):
         return  "error double char ID: " + str(charname)
 
     c.execute("INSERT INTO chartable VALUES (?, ?, 0, 0, 0, 0 ,0 ,0 ,0 ,0)", (cID, user))
@@ -51,27 +57,28 @@ def printTable(c):
     for row in rows:
         print(row)
 
-def db_get_char(cID):
-    conn = sqlite3.connect('example.db')
-    cursor = conn.cursor()
-
-    cursor.execute("SELECT * FROM chartable WHERE cID=?",(cID,))
-    res = cursor.fetchall()
-    conn.close()
+def db_get_char(c, cID):
+ 
+    c.execute("SELECT * FROM chartable WHERE cID=?",(cID,))
+    res = c.fetchall()
     return res
 
-def db_get_char_list(uID):
-    
-    conn = sqlite3.connect('example.db')
-    cursor = conn.cursor()
+def db_get_char_list(c, uID):    
 
-    cursor.execute("SELECT cID FROM chartable WHERE uID =?",(uID,))
-    rows = cursor.fetchall()
+    c.execute("SELECT cID FROM chartable WHERE uID =?",(uID,))
+    rows = c.fetchall()
     res = []
     for row in rows:
         res.append(remove_prefix(row[0], uID))
-    conn.close()
     return res
+
+def db_remove_char(c, conn, uID, charname):
+    cID = str(uID) + str(charname)
+    if not check_char_exists(c, uID, charname):
+        return "char could not be found!"
+    c.execute("DELETE FROM chartable WHERE cID =?",(cID,))    
+    conn.commit()
+    return "Following char was deleted: " +charname
     
 def queue_register(msg, charname):
     q.put((0, msg.channel, str(msg.author), charname))
@@ -79,21 +86,27 @@ def queue_register(msg, charname):
 def queue_charlist(msg, uID):
     q.put((1,msg.channel, str(msg.author)))
 
+def queue_delete_char(msg, uID, charname):
+    q.put((2,msg.channel, str(uID), str(charname)))
+
 def parse_queue_item(item, c, conn):
+    channel = item[1]
+    uID = item[2]
+
     if item[0] == 0: #register call
-        uID = item[2]
         charname = item[3]
-        channel = item[1]
-        success = registerChar(c, conn, uID, charname)
+        success = db_register_char(c, conn, uID, charname)
         glob_vars.send_message(channel,success)
-    if item[0] ==1:
-        channel = item[1]
-        uID = item[2]
-        chars = db_get_char_list(uID)
+    if item[0] ==1:#list chars call
+        chars = db_get_char_list(c, uID)
         res = ""
         for char in chars:
             res = res + char + "\n"
         glob_vars.send_message(channel,res)
+    if item[0] ==2:
+        charname = item[3]
+        success = db_remove_char(c, conn, uID, charname)
+        glob_vars.send_message(channel, success)
         
 
 
@@ -107,10 +120,10 @@ def db_runner(threadName):
     createTable(c)
     conn.commit()
 
-    registerChar(c, conn, "randomRandy", "heral")
-    registerChar(c, conn, "randomRandy", "horol")
-    registerChar(c, conn, "smuffin", "smuff")
-    registerChar(c, conn, "randomRandy", "horol")
+    db_register_char(c, conn, "randomRandy", "heral")
+    db_register_char(c, conn, "randomRandy", "horol")
+    db_register_char(c, conn, "smuffin", "smuff")
+    db_register_char(c, conn, "randomRandy", "horol")
 
 
     createTable(c)

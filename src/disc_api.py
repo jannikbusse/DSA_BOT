@@ -25,7 +25,6 @@ async def on_message(message):
         return   
     await received_msg(message)
     
-        #await message.channel.send(response)
 @tasks.loop(seconds=1)
 async def loop():
     try:

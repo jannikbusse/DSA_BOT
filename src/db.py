@@ -4,10 +4,9 @@ import time
 import random
 import discord
 import glob_vars
+from glob_vars import db_queue as q
 
-t_count = 0
-q = queue.Queue() #queue for access calls
-
+t_count = 0# threadcount (dumb way to implement singleton...)
 
 def check_char_exists(c, uID, charname):
     cID = str(uID) + str(charname)
@@ -103,7 +102,7 @@ def parse_queue_item(item, c, conn):
         for char in chars:
             res = res + char + "\n"
         glob_vars.send_message(channel,res)
-    if item[0] ==2:
+    if item[0] ==2: #delete call
         charname = item[3]
         success = db_remove_char(c, conn, uID, charname)
         glob_vars.send_message(channel, success)
@@ -132,7 +131,7 @@ def db_runner(threadName):
     while(True):
         item = q.get()
         parse_queue_item(item,c , conn)
-        time.sleep(0.1)
+        time.sleep(0.2)
 
     conn.close()
 

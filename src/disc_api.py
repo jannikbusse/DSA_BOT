@@ -2,7 +2,7 @@ import os
 import discord
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
-from bot import *
+
 import queue
 import glob_vars
 
@@ -23,9 +23,9 @@ async def on_ready():
 async def on_message(message):
     if message.author == client.user:
         return   
-    await received_msg(message)
+    glob_vars.send_bot_receive_queue(message)
     
-@tasks.loop(seconds=1)
+@tasks.loop(seconds=0.2)
 async def loop():
     try:
         send_item = glob_vars.send_queue.get(False)
@@ -35,5 +35,8 @@ async def loop():
     except queue.Empty:
         send_item = None
 
+def start_api():
+    client.run(TOKEN)
+    print("started")
+
 loop.start()
-client.run(TOKEN)

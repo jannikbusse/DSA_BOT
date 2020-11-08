@@ -3,6 +3,7 @@ import threading, queue
 import time
 import random
 import discord
+import glob_vars
 
 t_count = 0
 q = queue.Queue() #queue for access calls
@@ -16,23 +17,19 @@ def createTable(c):
     c.execute('''CREATE TABLE IF NOT EXISTS user
                 (uID PRIMARY KEY, sChar )''')
 
-    c.execute('''CREATE TABLE IF NOT EXISTS chars
-                (uID, cID)''')
-
     c.execute('''CREATE TABLE IF NOT EXISTS chartable
-                (cID PRIMARY KEY, mu, kl, int, ch, ff, ge, ko, kk)''') #int = in!!!!!
+                (cID PRIMARY KEY, uID, mu, kl, int, ch, ff, ge, ko, kk)''') #int = in!!!!!
 
 
 def registerChar(c, conn, user, charname):
     cID = user + charname
 
     c.execute("SELECT EXISTS(SELECT * FROM chartable WHERE cID=?)", (cID,))
-    if(c.fetchone()[0]):
-       
+    if(c.fetchone()[0]):       
         return  "error double char ID: " + str(charname)
 
-    c.execute("INSERT INTO chartable VALUES (?, 0, 0, 0, 0 ,0 ,0 ,0 ,0)", (cID,))
-    c.execute("INSERT INTO chars VALUES (?, ?)", (user, cID))
+    c.execute("INSERT INTO chartable VALUES (?, ?, 0, 0, 0, 0 ,0 ,0 ,0 ,0)", (cID, user))
+    
 
     c.execute("SELECT EXISTS(SELECT * FROM user WHERE uID=?)", (user,))
     if(not c.fetchone()[0]):
@@ -49,7 +46,7 @@ def start_runner():
 
 def printTable(c):
     print("\ntable:")
-    c.execute('SELECT * FROM chartable INNER JOIN chars USING(cID) INNER JOIN user USING(uID)')
+    c.execute('SELECT * FROM chartable INNER JOIN user USING(uID)')
     rows = c.fetchall()
     for row in rows:
         print(row)
@@ -68,7 +65,7 @@ def db_get_char_list(uID):
     conn = sqlite3.connect('example.db')
     cursor = conn.cursor()
 
-    cursor.execute("SELECT cID FROM chars WHERE uID =?",(uID,))
+    cursor.execute("SELECT cID FROM chartable WHERE uID =?",(uID,))
     rows = cursor.fetchall()
     res = []
     for row in rows:
@@ -77,15 +74,27 @@ def db_get_char_list(uID):
     return res
     
 def queue_register(msg, charname):
-    q.put((0, str(msg.author), charname, msg.channel))
+    q.put((0, msg.channel, str(msg.author), charname))
+
+def queue_charlist(msg, uID):
+    q.put((1,msg.channel, str(msg.author)))
 
 def parse_queue_item(item, c, conn):
     if item[0] == 0: #register call
-        uID = item[1]
-        charname = item[2]
-        channel = item[3]
+        uID = item[2]
+        charname = item[3]
+        channel = item[1]
         success = registerChar(c, conn, uID, charname)
-        print(success)
+        glob_vars.send_message(channel,success)
+    if item[0] ==1:
+        channel = item[1]
+        uID = item[2]
+        chars = db_get_char_list(uID)
+        res = ""
+        for char in chars:
+            res = res + char + "\n"
+        glob_vars.send_message(channel,res)
+        
 
 
 def db_runner(threadName):
@@ -104,7 +113,6 @@ def db_runner(threadName):
     registerChar(c, conn, "randomRandy", "horol")
 
 
-
     createTable(c)
     conn.commit()
     printTable(c)
@@ -119,14 +127,6 @@ def queue_adder(threadName): #just a debugger thread!
     print("running")
     #queue_register("smuffin", "smuffelino")
     time.sleep(1)
-
-
-async def send_msg(channel, content):#fuck this function
-    #loop = asyncio.new_event_loop()
-    #asyncio.set_event_loop(loop)
-    #result = loop.run_until_complete(channel.send(content))
-    await channel.send(content)
-    
 
 
 start_runner()

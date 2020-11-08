@@ -15,6 +15,22 @@ def check_char_exists(c, uID, charname):
         return True
     return False     
 
+def check_user_has_char(c, uID):
+    c.execute("SELECT EXISTS(SELECT * FROM chartable WHERE uID=?)",(uID,))
+    if(c.fetchone()[0]):
+        return True
+    return False    
+
+def check_user_exists(c, uID):
+    c.execute("SELECT EXISTS(SELECT * FROM user WHERE uID=?)", (uID,))
+    if(c.fetchone()[0]):
+        return True
+    return False     
+def get_selected_char(c, uID):
+    c.execute("SELECT sChar FROM user WHERE uID=?", (uID,))
+    selected = c.fetchone()[0] #get cID from selected char   
+    return selected
+
 def remove_prefix(text, prefix):
     return text[text.startswith(prefix) and len(prefix):]
 
@@ -36,8 +52,7 @@ def db_register_char(c, conn, user, charname):
     c.execute("INSERT INTO chartable VALUES (?, ?, 0, 0, 0, 0 ,0 ,0 ,0 ,0)", (cID, user))
     
 
-    c.execute("SELECT EXISTS(SELECT * FROM user WHERE uID=?)", (user,))
-    if(not c.fetchone()[0]):
+    if not check_user_exists(c, user):
         c.execute("INSERT INTO user VALUES (?, ?)", (user, cID))
 
     conn.commit()
@@ -73,11 +88,38 @@ def db_get_char_list(c, uID):
 
 def db_remove_char(c, conn, uID, charname):
     cID = str(uID) + str(charname)
+    res = "Trying to remove char - something happened!"
     if not check_char_exists(c, uID, charname):
         return "char could not be found!"
-    c.execute("DELETE FROM chartable WHERE cID =?",(cID,))    
+    c.execute("DELETE FROM chartable WHERE cID =?",(cID,))   
+    res = "char has been deleted!" 
+    if not check_user_has_char(c, uID):
+        c.execute("DELETE FROM user WHERE uID =?",(uID,))
+        res = "char has been deleted. User was deleted aswell!"
+    elif get_selected_char(c, uID) == cID:
+        next_selected = db_get_char_list(c, uID)[0]
+        db_get_char(c, next_selected)
+        res = "char has been deleted - new selected char: " + next_selected
+
     conn.commit()
-    return "Following char was deleted: " +charname
+    return res
+
+def db_update_stats(c, conn, uID, stat, statnumber):
+    if not check_user_exists(c, uID):
+       return "User has no character selected!"
+    selected = get_selected_char(c, uID)
+    c.execute("UPDATE chartable SET "+stat+"=? WHERE cID=?",(statnumber,selected))#pray that there is no exploit where stat can be manipulated outside of allowed values!!
+    conn.commit()
+    return "updated " + stat + " sucessfully: " + str(statnumber)
+
+def db_select_char(c, conn, uID, charname):
+    cID = uID + charname
+    if not check_char_exists(c, uID, charname):
+        return "Could not find char in database!"
+    c.execute("UPDATE user SET sChar=? WHERE uID=?",(cID,uID))
+    conn.commit()
+    return "Selected " + charname + " successfully!"
+
     
 def queue_register(msg, charname):
     q.put((0, msg.channel, str(msg.author), charname))
@@ -87,6 +129,15 @@ def queue_charlist(msg, uID):
 
 def queue_delete_char(msg, uID, charname):
     q.put((2,msg.channel, str(uID), str(charname)))
+
+def queue_update_stats(msg, uID, stat, statnumber):
+    q.put((3,msg.channel, str(uID), str(stat), statnumber))
+
+def queue_select_char(msg, uID, charname):
+    q.put((4,msg.channel, str(uID), str(charname)))
+
+def queue_get_selected(msg, uID):
+    q.put((5,msg.channel, str(uID)))
 
 def parse_queue_item(item, c, conn):
     channel = item[1]
@@ -101,11 +152,31 @@ def parse_queue_item(item, c, conn):
         res = ""
         for char in chars:
             res = res + char + "\n"
+        if res == "":
+            res = "No chars in database!"
         glob_vars.send_message(channel,res)
     if item[0] ==2: #delete call
         charname = item[3]
         success = db_remove_char(c, conn, uID, charname)
         glob_vars.send_message(channel, success)
+
+    if item[0] ==3: #statchange
+        stat = item[3]
+        statnumber = item[4]
+        success = db_update_stats(c, conn, uID, stat, statnumber)
+        glob_vars.send_message(channel, success)
+
+    if item[0] ==4:#select char
+        charname = item[3]
+        success = db_select_char(c, conn, uID, charname)
+        glob_vars.send_message(channel, success)
+
+    if item[0] ==5:#print selected
+        selected = get_selected_char(c, uID)
+        glob_vars.send_message(channel, "Selected char for user " + uID + ": " + remove_prefix(selected,uID))
+
+
+
         
 
 
@@ -113,7 +184,7 @@ def db_runner(threadName):
     global t_count
     t_count += 1
     print("started " + threadName + " as " + str(t_count) + " thread!")
-    conn = sqlite3.connect('example.db')
+    conn = sqlite3.connect('DSA_base.db')
     c = conn.cursor()
 
     createTable(c)

@@ -6,9 +6,29 @@ import glob_vars
 import time, threading
 import dice
 
+stats = ["mu","kl","in","ch","ff","ge", "ko", "kk"] #careful: in is int in the db!
+
+def is_int(s):
+    try: 
+        int(s)
+        return True
+    except ValueError:
+        return False
+
+
 def received_msg(message):
     parse_msg(message)
 
+def update_stats(message, args):
+    for i in range(len(args)):
+        s = args[i] 
+        if s in stats and i+1 < len(args):            
+            if is_int(args[i+1]):
+                if s == "in" :
+                    s = "int"
+                db.queue_update_stats(message, message.author, s, args[i+1])
+            else:
+                send_message(message.channel, "Wrong arg for " + s +": " + args[i+1])
 
 
 
@@ -34,13 +54,25 @@ def parse_msg(message):
             send_message(message.channel, "too few arguments!")
             return
         db.queue_delete_char(message, message.author, args[0])
+    elif(s.startswith("/update")):
+        args = s.split()[1:]
+        update_stats(message, args)
 
-    elif(s.startswith("/r")):
+    elif(s.startswith("/r")): #TODO gar kein bock...
         args = s.split()[1:]
         if(len(args) < 1):
             send_message(message.channel, "too few arguments!")
             return
         dice.simulate_dice(args[0])
+
+    elif(s.startswith("/selected")):
+        db.queue_get_selected(message, message.author)
+    elif(s.startswith("/select")):
+        args = s.split()[1:]
+        if(len(args) < 1):
+            send_message(message.channel, "too few arguments!")
+            return
+        db.queue_select_char(message, message.author, args[0])
         
 
 

@@ -3,6 +3,7 @@ import threading, queue
 import time
 import random
 import discord
+import helper
 
 conn = None
 c = None
@@ -15,6 +16,7 @@ def check_char_exists(uID, charname):
     return False     
 
 def check_user_has_char(uID):
+    uID = str(uID)
     c.execute("SELECT EXISTS(SELECT * FROM chartable WHERE uID=?)",(uID,))
     if(c.fetchone()[0]):
         return True
@@ -30,9 +32,6 @@ def get_selected_char(uID):
     c.execute("SELECT sChar FROM user WHERE uID=?", (uID,))
     selected = c.fetchone()[0] #get cID from selected char   
     return selected
-
-def remove_prefix(text, prefix):
-    return text[text.startswith(prefix) and len(prefix):]
 
 
 def createTable():
@@ -68,8 +67,8 @@ def printTable():
     for row in rows:
         print(row)
 
-def db_get_char(cID):
- 
+def db_get_char(uID, charname):
+    cID = str(uID) + str(charname)
     c.execute("SELECT * FROM chartable WHERE cID=?",(cID,))
     res = c.fetchall()
     return res
@@ -80,7 +79,7 @@ def db_get_char_list(uID):
     rows = c.fetchall()
     res = []
     for row in rows:
-        res.append(remove_prefix(row[0], uID))
+        res.append(helper.remove_prefix(row[0], uID))
     return res
 
 def db_remove_char(uID, charname):
@@ -101,7 +100,7 @@ def db_remove_char(uID, charname):
     conn.commit()
     return res
 
-def db_update_stats(uID, stat, statnumber):
+def db_update_stats(uID, stat, statnumber:int):
     uID = str(uID)
     if not check_user_exists(uID):
        return "User has no character selected!"

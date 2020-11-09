@@ -5,6 +5,7 @@ import disc_api
 import glob_vars
 import time, threading
 import dice
+import helper
 
 stats = ["mu","kl","in","ch","ff","ge", "ko", "kk"] #careful: in is int in the db!
 
@@ -40,6 +41,31 @@ def command_chars(message):
         res = "No chars in database!"
     send_message(message.channel,res)
 
+def command_char(message, args):
+    charname = ""
+    if not db.check_user_has_char(message.author):
+        send_message(message.channel, "User has no character!")
+        return
+    if len(args) < 1:
+        charname = helper.remove_prefix(db.get_selected_char(message.author), str(message.author))
+    else:
+        charname = args[0]
+    charEntry = db.db_get_char(message.author, charname)[0]
+    mu = helper.make_str_two_digits(charEntry[2])
+    kl = helper.make_str_two_digits(charEntry[3])
+    it = helper.make_str_two_digits(charEntry[4])
+    ch = helper.make_str_two_digits(charEntry[5])
+    ff = helper.make_str_two_digits(charEntry[6])
+    ge = helper.make_str_two_digits(charEntry[7])
+    ko = helper.make_str_two_digits(charEntry[8])
+    kk = helper.make_str_two_digits(charEntry[9])  
+    header = "---------"+ charname +"-----------------"
+    toprow = "| mu | kl | in | ch | ff | ge | ko | kk |"
+    botrow = "| " +mu +" | " +kl+" | " +it+" | " +ch+" | " +ff+" | " +ge+" | " +ko+" | " +kk+" |"
+    
+   
+    send_message(message.channel, header+"\n"+toprow+"\n"+botrow)
+
 def command_delete(message, args):
     if(len(args) < 1):
         send_message(message.channel, "too few arguments!")
@@ -52,11 +78,11 @@ def command_update(message, args):
     for i in range(len(args)):
         s = args[i] 
         if s in stats and i+1 < len(args):            
-            if is_int(args[i+1]):
+            if is_int(args[i+1]):               
                 if s == "in" :
                     s = "int"
                                
-                statnumber = args[i+1]
+                statnumber = int(args[i+1])
                 success = db.db_update_stats(message.author, s, statnumber)
                 send_message(message.channel, success)
             else:
@@ -64,7 +90,7 @@ def command_update(message, args):
 
 def command_selected(message):
     selected = db.get_selected_char(message.author)
-    send_message(message.channel, "Selected char for user " + str(message.author) + ": " + db.remove_prefix(selected,str(message.author)))
+    send_message(message.channel, "Selected char for user " + str(message.author) + ": " + helper.remove_prefix(selected,str(message.author)))
 
 def command_select(message, args):
     if(len(args) < 1):
@@ -76,32 +102,32 @@ def command_select(message, args):
 
 def parse_msg(message):
     s = message.content.lower()
+    s = helper.remove_prefix(s, glob_vars.prefix)
+    args = s.split()[1:]
     send_message( message.channel, "parsing .. \"" + message.content + "\" ...")
 
-    if(s.startswith("/register")): #/register <charname>
-        args = s.split()[1:] #whitespaces cant be in charnames because of this
+    if(s.startswith("register")): #/register <charname>
         command_register(message, args)
 
-    elif(s.startswith("/chars")): #/chars
+    elif(s.startswith("chars")): #/chars
         command_chars(message)     
+    
+    elif(s.startswith("char")): #/char <charname - optional>        
+        command_char(message, args)     
 
-    elif(s.startswith("/delete")):#/delete <charname>
-        args = s.split()[1:]
+    elif(s.startswith("delete")):#/delete <charname>
         command_delete(message, args)
 
-    elif(s.startswith("/update")):#/update in <int> ch <y> ...
-        args = s.split()[1:]
+    elif(s.startswith("update")):#/update in <int> ch <y> ...
         command_update(message, args)  
 
-    elif(s.startswith("/selected")):#/select <charname>
+    elif(s.startswith("selected")):#/select <charname>
         command_selected(message)
 
-    elif(s.startswith("/select")):
-        args = s.split()[1:]        
+    elif(s.startswith("select")):
         command_select(message,args)
 
-    elif(s.startswith("/r")): #TODO gar kein bock...
-        args = s.split()[1:]
+    elif(s.startswith("r")): #TODO gar kein bock...
         if(len(args) < 1):
             send_message(message.channel, "too few arguments!")
             return

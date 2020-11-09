@@ -3,6 +3,8 @@ import queue
 send_queue = queue.Queue() 
 bot_receive_queue = queue.Queue()
 
+prefix = '/'
+
 def send_bot_receive_queue(msg):
     bot_receive_queue.put((msg))
 

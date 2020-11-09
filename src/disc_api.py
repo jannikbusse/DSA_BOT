@@ -23,7 +23,8 @@ async def on_ready():
 async def on_message(message):
     if message.author == client.user:
         return   
-    glob_vars.send_bot_receive_queue(message)
+    if message.content.startswith(glob_vars.prefix):
+        glob_vars.send_bot_receive_queue(message)
     
 @tasks.loop(seconds=0.2)
 async def loop():

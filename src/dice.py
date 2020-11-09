@@ -1,10 +1,20 @@
 import random
 import re
+import logging
+
+
+no_errors = True
 
 def simulate_dice(st):
-    r = parse_dice(st)
+    global no_errors
+    no_errors = True
+    r, r_print = parse_dice(st)
     res = parse_eq(r)
-    return res
+
+    if not no_errors:
+        r_print = "Error in string!"
+        res = ""
+    return (r_print,res)
 
 def replace_stats(st:str, statList) -> str:
     stats = ["mu","kl","in","ch","ff","ge", "ko", "kk"]
@@ -14,14 +24,17 @@ def roll_dice(sides):
     return random.randint(0, max(0, sides))
 
 def parse_atomic(s):
+    global no_errors
     try: 
         int(s)
         return int(s)
     except ValueError:
-        print("error in parsing: " +s)
+        logging.info("error in parsing: " +s + "<")
+        no_errors = False
         return 0
 
 def parse_dice(s):
+    s_print = s
     p = re.compile("[0-9]*w[0-9]*")
     for m in p.finditer(s):
         left = s[:m.start()]
@@ -32,18 +45,31 @@ def parse_dice(s):
             pre = 1
         if post == "":
             post = 20
-        total = 0
+        total = ""
+        total_print = ""
         for i in range(int(pre)):
-            total += roll_dice(int(post))
-        s = left + str(total) + right
-    return s
+            d_res = str(roll_dice(int(post)))
+            total += d_res
+            total_print = total_print +  "**" + d_res + "**"
+            if not i == int(pre)-1:
+                total += " + "
+                total_print += " + "
+        s = left + "( " + str(total) + " ) " + right
+        s_print = left + " [ " + str(total_print) + " ] " + right
+
+    return (s,s_print)
 
 def parse_eq(s): 
+    global no_errors
+
     comps = []    
-    if '+' in s or '-' in s:
+    if ')' in s:
+        comps = re.compile(r'[\)]').split(s)    
+    elif '+' in s or '-' in s:
         comps = re.compile(r'[\-\+]').split(s)
     elif '*' in s:
-        comps = re.compile(r'[\*]').split(s)    
+        comps = re.compile(r'[\*]').split(s)
+    
     else:
         return parse_atomic(s)
     
@@ -51,13 +77,24 @@ def parse_eq(s):
     left = s[:pos]
     right = s[pos+1:]
     operator = s[pos]
-
+    
     if operator == '*' :
+        
         return parse_eq(left) * parse_eq(right)
     elif operator == '+' :
         return parse_eq(left) + parse_eq(right)
     elif operator == '-' :
         return parse_eq(left) - parse_eq(right)
+    elif operator ==')':
+        if not '(' in left:
+            no_errors = False
+
+        last_idx = left.rfind('(')
+        inner_bracket = left[last_idx+1:]
+       
+
+        bracket = str(parse_eq(inner_bracket))
+        return parse_eq(str(left[:last_idx])+str(bracket)+str(right))
 
 
 

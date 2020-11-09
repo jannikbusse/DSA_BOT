@@ -105,9 +105,8 @@ def command_roll(message, s, args):
     s = helper.remove_prefix(s, "roll")
     if(len(args) < 1):
         s = "w20"
-    print(s)
-    success = dice.simulate_dice(s)
-    send_message(message.channel, success)
+    (full, res) = dice.simulate_dice(s)
+    send_message(message.channel, "Results:" + full + " =\n **" + str(res)+"**")
 
 def command_set_prefix(message, args):
     if(len(args) < 1):

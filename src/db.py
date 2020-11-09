@@ -3,8 +3,6 @@ import threading, queue
 import time
 import random
 import discord
-import glob_vars
-from glob_vars import db_queue as q
 
 conn = None
 c = None

@@ -2,6 +2,7 @@ import os
 import discord
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
+import logging
 
 import queue
 import glob_vars
@@ -14,9 +15,9 @@ client = discord.Client()
 
 @client.event
 async def on_ready():
-    print(f'{client.user} has connected to Discord!')
+    logging.info(f'{client.user} has connected to Discord!')
     for guild in client.guilds:
-        print(guild)
+        logging.info(guild)
 
 
 @client.event #receive msg event callback -----------------------
@@ -30,7 +31,7 @@ async def on_message(message):
 async def loop():
     try:
         send_item = glob_vars.send_queue.get(False)
-        print(send_item)
+        logging.info(send_item)
         channel, content = send_item
         await channel.send(content)
     except queue.Empty:
@@ -38,6 +39,5 @@ async def loop():
 
 def start_api():
     client.run(TOKEN)
-    print("started")
 
 loop.start()

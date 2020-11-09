@@ -6,6 +6,7 @@ import glob_vars
 import time, threading
 import dice
 import helper
+import logging
 
 stats = ["mu","kl","in","ch","ff","ge", "ko", "kk"] #careful: in is int in the db!
 
@@ -100,6 +101,15 @@ def command_select(message, args):
     success = db.db_select_char(message.author, charname)
     send_message(message.channel, success)
 
+def command_roll(message, s, args):
+    s = helper.remove_prefix(s, "roll")
+    if(len(args) < 1):
+        s = "w20"
+    print(s)
+    success = dice.simulate_dice(s)
+    send_message(message.channel, success)
+
+
 def parse_msg(message):
     s = message.content.lower()
     s = helper.remove_prefix(s, glob_vars.prefix)
@@ -127,11 +137,8 @@ def parse_msg(message):
     elif(s.startswith("select")):
         command_select(message,args)
 
-    elif(s.startswith("r")): #TODO gar kein bock...
-        if(len(args) < 1):
-            send_message(message.channel, "too few arguments!")
-            return
-        dice.simulate_dice(args[0])
+    elif(s.startswith("roll")): 
+        command_roll(message,s ,args)
         
 
 
@@ -144,14 +151,16 @@ def check_queue():
         send_item = None
 
 def start_bot():
-    print("Started bot!")
+    
+    logging.info("Started bot!")
     db.init_db()
     while(True):
         time.sleep(0.2)
         check_queue()
         
 
-
+logging.basicConfig(level=logging.INFO, filename="log.txt", filemode="a+",
+format="%(asctime)-15s %(levelname)-8s %(message)s")
 x = threading.Thread(target=start_bot)
 x.start()
 disc_api.start_api()

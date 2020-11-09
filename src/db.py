@@ -4,6 +4,7 @@ import time
 import random
 import discord
 import helper
+import logging
 
 conn = None
 c = None
@@ -27,6 +28,7 @@ def check_user_exists(uID):
     if(c.fetchone()[0]):
         return True
     return False     
+    
 def get_selected_char(uID):
     uID = str(uID)
     c.execute("SELECT sChar FROM user WHERE uID=?", (uID,))
@@ -122,7 +124,7 @@ def db_select_char(uID, charname):
     
 
 def init_db():
-    print("started db!")    
+    logging.info("started db!")    
     global conn, c
     conn = sqlite3.connect('DSA_base.db')
     c = conn.cursor()

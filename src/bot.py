@@ -87,9 +87,12 @@ def check_queue():
 
 def start_bot():
     print("Started bot!")
+    db.init_db()
     while(True):
         time.sleep(0.2)
         check_queue()
+        db.db_runner_update()
+
 
 x = threading.Thread(target=start_bot)
 x.start()

@@ -109,10 +109,26 @@ def command_roll(message, s, args):
     success = dice.simulate_dice(s)
     send_message(message.channel, success)
 
+def command_set_prefix(message, args):
+    if(len(args) < 1):
+        send_message(message.channel, "too few arguments!")
+        return
+    success = db.db_set_prefix(message.guild, args[0])
+    send_message(message.channel, success)
+
 
 def parse_msg(message):
+    prefix = db.db_get_prefix(message.guild)
+
+    if str(message.content) == "prefix":
+        send_message(message.channel, "The prefix for this server is: "+ prefix)
+        return
+
+    if not message.content.startswith(prefix):
+        return
+    
     s = message.content.lower()
-    s = helper.remove_prefix(s, glob_vars.prefix)
+    s = helper.remove_prefix(s, prefix)
     args = s.split()[1:]
     send_message( message.channel, "parsing .. \"" + message.content + "\" ...")
 
@@ -139,6 +155,9 @@ def parse_msg(message):
 
     elif(s.startswith("roll")): 
         command_roll(message,s ,args)
+
+    elif(s.startswith("prefix")):
+        command_set_prefix(message, args)
         
 
 

@@ -28,6 +28,13 @@ def check_user_exists(uID):
     if(c.fetchone()[0]):
         return True
     return False     
+
+def check_server_exists(sID):
+    sID = str(sID)
+    c.execute("SELECT EXISTS(SELECT * FROM server WHERE sID=?)", (sID,))
+    if(c.fetchone()[0]):
+        return True
+    return False   
     
 def get_selected_char(uID):
     uID = str(uID)
@@ -40,16 +47,40 @@ def createTable():
     c.execute('''CREATE TABLE IF NOT EXISTS user
                 (uID PRIMARY KEY, sChar )''')
 
+    c.execute('''CREATE TABLE IF NOT EXISTS server
+                (sID PRIMARY KEY, prefix )''')
+
     c.execute('''CREATE TABLE IF NOT EXISTS chartable
                 (cID PRIMARY KEY, uID, mu, kl, int, ch, ff, ge, ko, kk)''') #int = in!!!!!
+
+def db_get_prefix(server):
+    sID = str(server.id)
+    c.execute("SELECT prefix FROM server WHERE sID=?",(sID,))
+    res = c .fetchall()
+    if len(res) == 0:
+        print("no pre!")
+        return '/'
+    
+    return res[0][0]
+
+def db_set_prefix(server, prefix):
+    sID = str(server.id)
+    
+    prefix = str(prefix)
+    if not check_server_exists(sID):
+        c.execute("INSERT INTO server VALUES (?, ?)", (sID, prefix))
+        conn.commit()
+        return "prefix has been created: " + prefix
+    c.execute("UPDATE server SET prefix =? WHERE sID=?",(prefix,sID))
+    conn.commit()
+    return "prefix has been set to: "+prefix    
+
 
 
 def db_register_char(user, charname):
     user = str(user)
     charname = str(charname)
     cID = user + charname
-   
-
     if (check_char_exists(user, charname)):
         return  "error double char ID: " + str(charname)
 

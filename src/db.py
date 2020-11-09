@@ -28,6 +28,7 @@ def check_user_exists(uID):
         return True
     return False     
 def get_selected_char(uID):
+    uID = str(uID)
     c.execute("SELECT sChar FROM user WHERE uID=?", (uID,))
     selected = c.fetchone()[0] #get cID from selected char   
     return selected
@@ -45,7 +46,10 @@ def createTable():
 
 
 def db_register_char(user, charname):
+    user = str(user)
+    charname = str(charname)
     cID = user + charname
+   
 
     if (check_char_exists(user, charname)):
         return  "error double char ID: " + str(charname)
@@ -73,7 +77,7 @@ def db_get_char(cID):
     return res
 
 def db_get_char_list(uID):    
-
+    uID = str(uID)
     c.execute("SELECT cID FROM chartable WHERE uID =?",(uID,))
     rows = c.fetchall()
     res = []
@@ -82,6 +86,7 @@ def db_get_char_list(uID):
     return res
 
 def db_remove_char(uID, charname):
+    uID = str(uID)
     cID = str(uID) + str(charname)
     res = "Trying to remove char - something happened!"
     if not check_char_exists(uID, charname):
@@ -91,15 +96,15 @@ def db_remove_char(uID, charname):
     if not check_user_has_char(uID):
         c.execute("DELETE FROM user WHERE uID =?",(uID,))
         res = "char has been deleted. User was deleted aswell!"
-    elif get_selected_char(c, uID) == cID:
+    elif get_selected_char(uID) == cID:
         next_selected = db_get_char_list(uID)[0]
-        db_get_char(c, next_selected)
         res = "char has been deleted - new selected char: " + next_selected
 
     conn.commit()
     return res
 
 def db_update_stats(uID, stat, statnumber):
+    uID = str(uID)
     if not check_user_exists(uID):
        return "User has no character selected!"
     selected = get_selected_char(uID)
@@ -108,6 +113,8 @@ def db_update_stats(uID, stat, statnumber):
     return "updated " + stat + " sucessfully: " + str(statnumber)
 
 def db_select_char(uID, charname):
+    uID = str(uID)
+    charname = str(charname)
     cID = uID + charname
     if not check_char_exists(uID, charname):
         return "Could not find char in database!"
@@ -116,67 +123,12 @@ def db_select_char(uID, charname):
     return "Selected " + charname + " successfully!"
 
     
-def queue_register(msg, charname):
-    q.put((0, msg.channel, str(msg.author), charname))
-
-def queue_charlist(msg, uID):
-    q.put((1,msg.channel, str(msg.author)))
-
-def queue_delete_char(msg, uID, charname):
-    q.put((2,msg.channel, str(uID), str(charname)))
-
-def queue_update_stats(msg, uID, stat, statnumber):
-    q.put((3,msg.channel, str(uID), str(stat), statnumber))
 
 def queue_select_char(msg, uID, charname):
     q.put((4,msg.channel, str(uID), str(charname)))
 
-def queue_get_selected(msg, uID):
-    q.put((5,msg.channel, str(uID)))
 
-def parse_queue_item(item):
-    channel = item[1]
-    uID = item[2]
 
-    if item[0] == 0: #register call
-        charname = item[3]
-        success = db_register_char(uID, charname)
-        glob_vars.send_message(channel,success)
-    if item[0] ==1:#list chars call
-        chars = db_get_char_list(uID)
-        res = ""
-        for char in chars:
-            res = res + char + "\n"
-        if res == "":
-            res = "No chars in database!"
-        glob_vars.send_message(channel,res)
-    if item[0] ==2: #delete call
-        charname = item[3]
-        success = db_remove_char(uID, charname)
-        glob_vars.send_message(channel, success)
-
-    if item[0] ==3: #statchange
-        stat = item[3]
-        statnumber = item[4]
-        success = db_update_stats(uID, stat, statnumber)
-        glob_vars.send_message(channel, success)
-
-    if item[0] ==4:#select char
-        charname = item[3]
-        success = db_select_char(uID, charname)
-        glob_vars.send_message(channel, success)
-
-    if item[0] ==5:#print selected
-        selected = get_selected_char(uID)
-        glob_vars.send_message(channel, "Selected char for user " + uID + ": " + remove_prefix(selected,uID))
-
-def db_runner_update():
-
-    try:
-        item = q.get(False)
-        parse_queue_item(item)
-    except queue.Empty:
-        pass
 
 
 def init_db():

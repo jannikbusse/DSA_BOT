@@ -19,44 +19,86 @@ def is_int(s):
 def received_msg(message):
     parse_msg(message)
 
-def update_stats(message, args):
+
+def send_message(channel,content):
+    glob_vars.send_message(channel, content)
+
+def command_register(message, args):
+    if(len(args) < 1):
+        send_message(message.channel, "too few arguments!")
+        return
+    charname = args[0]
+    success = db.db_register_char(message.author, charname)
+    send_message(message.channel,success)
+
+def command_chars(message):
+    chars = db.db_get_char_list(message.author)
+    res = ""
+    for char in chars:
+        res = res + char + "\n"
+    if res == "":
+        res = "No chars in database!"
+    send_message(message.channel,res)
+
+def command_delete(message, args):
+    if(len(args) < 1):
+        send_message(message.channel, "too few arguments!")
+        return
+    charname = args[0]
+    success = db.db_remove_char(message.author, charname)
+    send_message(message.channel, success)
+
+def command_update(message, args):
     for i in range(len(args)):
         s = args[i] 
         if s in stats and i+1 < len(args):            
             if is_int(args[i+1]):
                 if s == "in" :
                     s = "int"
-                db.queue_update_stats(message, message.author, s, args[i+1])
+                               
+                statnumber = args[i+1]
+                success = db.db_update_stats(message.author, s, statnumber)
+                send_message(message.channel, success)
             else:
                 send_message(message.channel, "Wrong arg for " + s +": " + args[i+1])
 
+def command_selected(message):
+    selected = db.get_selected_char(message.author)
+    send_message(message.channel, "Selected char for user " + str(message.author) + ": " + db.remove_prefix(selected,str(message.author)))
 
-
-def send_message(channel,content):
-    glob_vars.send_message(channel, content)
+def command_select(message, args):
+    if(len(args) < 1):
+        send_message(message.channel, "too few arguments!")
+        return
+    charname = args[0]
+    success = db.db_select_char(message.author, charname)
+    send_message(message.channel, success)
 
 def parse_msg(message):
     s = message.content.lower()
-    
-    if(s.startswith("/register")):
+    send_message( message.channel, "parsing .. \"" + message.content + "\" ...")
+
+    if(s.startswith("/register")): #/register <charname>
         args = s.split()[1:] #whitespaces cant be in charnames because of this
-        if(len(args) < 1):
-            send_message(message.channel, "too few arguments!")
-            return
-        db.queue_register(message, args[0])
+        command_register(message, args)
 
-    elif(s.startswith("/chars")):
-        db.queue_charlist(message, message.author)     
+    elif(s.startswith("/chars")): #/chars
+        command_chars(message)     
 
-    elif(s.startswith("/delete")):
+    elif(s.startswith("/delete")):#/delete <charname>
         args = s.split()[1:]
-        if(len(args) < 1):
-            send_message(message.channel, "too few arguments!")
-            return
-        db.queue_delete_char(message, message.author, args[0])
-    elif(s.startswith("/update")):
+        command_delete(message, args)
+
+    elif(s.startswith("/update")):#/update in <int> ch <y> ...
         args = s.split()[1:]
-        update_stats(message, args)
+        command_update(message, args)  
+
+    elif(s.startswith("/selected")):#/select <charname>
+        command_selected(message)
+
+    elif(s.startswith("/select")):
+        args = s.split()[1:]        
+        command_select(message,args)
 
     elif(s.startswith("/r")): #TODO gar kein bock...
         args = s.split()[1:]
@@ -64,19 +106,9 @@ def parse_msg(message):
             send_message(message.channel, "too few arguments!")
             return
         dice.simulate_dice(args[0])
-
-    elif(s.startswith("/selected")):
-        db.queue_get_selected(message, message.author)
-    elif(s.startswith("/select")):
-        args = s.split()[1:]
-        if(len(args) < 1):
-            send_message(message.channel, "too few arguments!")
-            return
-        db.queue_select_char(message, message.author, args[0])
         
 
 
-    send_message( message.channel, "parsing .. " + message.content)
 
 def check_queue():
     try:
@@ -91,7 +123,7 @@ def start_bot():
     while(True):
         time.sleep(0.2)
         check_queue()
-        db.db_runner_update()
+        
 
 
 x = threading.Thread(target=start_bot)

@@ -124,13 +124,6 @@ def db_select_char(uID, charname):
 
     
 
-def queue_select_char(msg, uID, charname):
-    q.put((4,msg.channel, str(uID), str(charname)))
-
-
-
-
-
 def init_db():
     print("started db!")    
     global conn, c

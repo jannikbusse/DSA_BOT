@@ -5,6 +5,40 @@ import logging
 
 no_errors = True
 
+
+def roll_dsa(args, statlist):
+    global no_errors
+    no_errors = True
+    statlist = statlist[2:]
+    res = replace_stats(args, statlist)
+    for i in range(len(res)):
+        res[i] = parse_eq(str(res[i]))
+    if not no_errors: 
+        return "Oops, something went wrong!"
+    d =[0,0,0]
+    rest = res[3]
+    for i in range(3):
+        d[i] = roll_dice(20)        
+        rest += min((res[i] - d[i]),0)       
+    result = "succeeded!"
+    if rest < 0:
+        result = "failed!"
+    output = "You have **" + str(rest) +"** left, You **"+result+"**\nResults: **" + str(d[0]) +"**  **" + str(d[1]) +"**  **" + str(d[2]) + "**"
+    stat_print = "\n\nStats:  "+str(res[0])+ ", " +str(res[1])+ ", "+str(res[2]) + ", " + str(res[3])
+    return (output + stat_print)
+
+
+
+
+def replace_stats(args, statList) -> str:
+    stats = ["mu","kl","in","ch","ff","ge", "ko", "kk"]
+    global no_errors
+    for i in range(3):
+        for s in range(len(stats)):
+            args[i] = args[i].replace(stats[s], str(statList[s]))
+    return args
+
+
 def simulate_dice(st):
     global no_errors
     no_errors = True
@@ -19,10 +53,6 @@ def simulate_dice(st):
 def is_sanitized_input(st):
     x = re.findall('[0-9]{6}', st)
     return (len(x) <= 0)
-
-def replace_stats(st:str, statList) -> str:
-    stats = ["mu","kl","in","ch","ff","ge", "ko", "kk"]
-    return st
 
 def roll_dice(sides):
     return random.randint(0, max(0, sides))
@@ -109,3 +139,9 @@ def parse_eq(s):
 
 
 
+def is_int(s):
+    try: 
+        int(s)
+        return True
+    except ValueError:
+        return False

@@ -112,6 +112,19 @@ def command_roll(message, s, args):
     res = dice.simulate_dice(s)
     send_message(message.channel, res)
 
+def command_rd(message, args):
+    if len(args) != 3 and len(args) != 4:
+        send_message(message.channel, "Wrong syntax!\n/rd <stat> <stat> <stat> <talent - optional>")
+        return
+
+    if not db.check_user_has_char(message.author):
+        send_message(message.channel, "User has no character!")
+        return
+    charname = helper.remove_prefix(db.get_selected_char(message.author), str(message.author))
+    charEntry = db.db_get_char(message.author, charname)[0]
+    res = dice.roll_dsa(args, charEntry)
+    send_message(message.channel, res)
+
 def command_set_prefix(message, args):
     if(len(args) < 1):
         send_message(message.channel, "too few arguments!")
@@ -133,7 +146,7 @@ def parse_msg(message):
     s = message.content.lower()
     s = helper.remove_prefix(s, prefix)
     args = s.split()[1:]
-    send_message( message.channel, "parsing .. \"" + message.content + "\" ...")
+    #send_message( message.channel, "parsing .. \"" + message.content + "\" ...") # debug message
 
     if(s.startswith("register")): #/register <charname>
         command_register(message, args)
@@ -155,6 +168,9 @@ def parse_msg(message):
 
     elif(s.startswith("select")):
         command_select(message,args)
+    
+    elif(s.startswith("rd ")):
+        command_rd(message, args)
 
     elif(s.startswith("roll")): 
         command_roll(message,s ,args)

@@ -27,11 +27,12 @@ def roll_dsa(args, statlist):
     result = "succeeded!"
     if rest < 0:
         result = "failed!"
-    output = "You have **" + str(rest) +"** left, You **"+result+"**\n\nResults: **" + str(d[0]) +"**  **" + str(d[1]) +"**  **" + str(d[2]) + "**"
-    stat_print = "\nStats:  "+str(res[0])+ ", " +str(res[1])+ ", "+str(res[2]) 
+    output = "You have **" + str(rest) +"** left, You **"+result+"**"
+    stat_print = "\n\nStats:   "+str(res[0])+ "  " +str(res[1])+ "  "+str(res[2]) 
     if len(res) == 4:
-        stat_print += ", "+str(o_rest)
-    return (output + stat_print)
+        stat_print += "  "+str(o_rest)
+    result_print = "\nResults: **" + str(d[0]) +"**  **" + str(d[1]) +"**  **" + str(d[2]) + "**"
+    return (output + stat_print + result_print)
 
 
 

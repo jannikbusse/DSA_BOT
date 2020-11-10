@@ -23,11 +23,13 @@ def roll_dsa(args, statlist):
     o_rest = rest
     for i in range(3):
         d[i] = roll_dice(20)        
-        rest += min((res[i] - d[i]),0)       
-    result = "succeeded!"
+        rest += min((res[i] - d[i]),0)     
+    result = "You **succeeded!**"
     if rest < 0:
-        result = "failed!"
-    output = "You have **" + str(rest) +"** left, You **"+result+"**"
+        result = "You **failed!**"
+    if len(res) == 3:  
+        result = ""
+    output = "You have **" + str(rest) +"** left! "+result
     stat_print = "\n\nStats:   "+str(res[0])+ "  " +str(res[1])+ "  "+str(res[2]) 
     if len(res) == 4:
         stat_print += "  "+str(o_rest)

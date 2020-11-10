@@ -7,12 +7,18 @@ import logging
 no_errors = True
 
 
-def roll_dsa(args, statlist):
+def roll_dsa(args, charInfo): # statlist is (charlist, attribute list according to this char)
     global no_errors
     no_errors = True
+    statlist = charInfo[0][0]
+    attributelist = charInfo[1]
     charname = helper.remove_prefix(statlist[0], statlist[1]).capitalize()
     statlist = statlist[2:]
     res = replace_stats(args, statlist)
+    res = replace_attributes(res, attributelist)
+
+    print(res)
+
     for i in range(len(res)):
         res[i] = parse_eq(str(res[i]))
     if not no_errors: 
@@ -39,7 +45,12 @@ def roll_dsa(args, statlist):
     return (output + stat_print + result_print)
 
 
-
+def replace_attributes(args, attributes):
+    for attribute in attributes:
+        for i in range(len(args)):        
+            print("replacing " + attribute[0] + " with " + str(attribute[1]) + " in " + args[i])
+            args[i] = args[i].replace(str(attribute[0]), str(attribute[1]))
+    return args
 
 def replace_stats(args, statList) -> str:
     stats = ["mu","kl","in","ch","ff","ge", "ko", "kk"]

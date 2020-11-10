@@ -36,12 +36,36 @@ def check_server_exists(sID):
         return True
     return False   
     
+def check_char_has_attribute(cID, attribute):
+    cID = str(cID)
+    attribute = str(attribute)
+    c.execute("SELECT EXISTS(SELECT * FROM attributes WHERE cID=? AND attribute=?)", (cID, attribute) )
+    if(c.fetchone()[0]):
+        return True
+    return False   
+
 def get_selected_char(uID):
     uID = str(uID)
     c.execute("SELECT sChar FROM user WHERE uID=?", (uID,))
     selected = c.fetchone()[0] #get cID from selected char   
     return selected
 
+def get_attribute_list(cID):
+    cID = str(cID)
+    c.execute("SELECT attribute, value FROM attributes WHERE cID = ? ORDER BY length(attribute) DESC",(cID,))
+    res = c.fetchall()
+    return res
+
+
+def create_attribute_from_char(cID, attribute, value):
+    cID = str(cID)
+    attribute = str(attribute)
+    c.execute("INSERT INTO attributes VALUES (?, ?, ?)", (cID, attribute, value))
+    conn.commit()
+
+def update_attribute_from_char(cID, attribute, value):
+    c.execute("UPDATE attributes SET value =? WHERE cID=? AND attribute =?",(value,cID, attribute))
+    conn.commit()
 
 def createTable():
     c.execute('''CREATE TABLE IF NOT EXISTS user
@@ -52,6 +76,25 @@ def createTable():
 
     c.execute('''CREATE TABLE IF NOT EXISTS chartable
                 (cID PRIMARY KEY, uID, mu, kl, int, ch, ff, ge, ko, kk)''') #int = in!!!!!
+
+    c.execute('''CREATE TABLE IF NOT EXISTS attributes
+                (cID, attribute, value)''') #int = in!!!!!
+
+
+def db_update_attribute(uID, attribute, value):
+    selected = get_selected_char(uID)
+    if any(char.isdigit() for char in attribute): #check if string has number
+        return "oops, attribute cant contain a number!"
+    already_exists = check_char_has_attribute(selected, attribute)
+
+    if not already_exists:
+        create_attribute_from_char(selected, attribute, value)
+        return "**"+str(attribute) +"** has been created with **" + str(value) + "**!"
+
+    else:
+        update_attribute_from_char(selected, attribute, value)
+        return "**"+str(attribute) +"** has been set to **" + str(value) + "**!"
+
 
 def db_get_prefix(server):
     sID = str(server.id)
@@ -104,7 +147,9 @@ def db_get_char(uID, charname):
     cID = str(uID) + str(charname)
     c.execute("SELECT * FROM chartable WHERE cID=?",(cID,))
     res = c.fetchall()
-    return res
+    attributes = get_attribute_list(cID)
+
+    return (res, attributes)
 
 def db_get_char_list(uID):    
     uID = str(uID)

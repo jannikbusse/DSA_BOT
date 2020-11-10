@@ -55,7 +55,8 @@ def command_char(message, args):
         charname = helper.remove_prefix(db.get_selected_char(message.author), str(message.author))
     else:
         charname = args[0]
-    charEntry = db.db_get_char(message.author, charname)[0]
+    charEntry, attributeList = db.db_get_char(message.author, charname)
+    charEntry = charEntry[0]
     mu = helper.make_str_two_digits(charEntry[2])
     kl = helper.make_str_two_digits(charEntry[3])
     it = helper.make_str_two_digits(charEntry[4])
@@ -64,12 +65,14 @@ def command_char(message, args):
     ge = helper.make_str_two_digits(charEntry[7])
     ko = helper.make_str_two_digits(charEntry[8])
     kk = helper.make_str_two_digits(charEntry[9])  
-    header = "---------"+ charname +"-----------------"
+    header = "-----------**"+ charname +"**-----------------"
     toprow = "| mu | kl | in | ch | ff | ge | ko | kk |"
-    botrow = "| " +mu +" | " +kl+" | " +it+" | " +ch+" | " +ff+" | " +ge+" | " +ko+" | " +kk+" |"
-    
-   
-    send_message(message.channel, header+"\n"+toprow+"\n"+botrow)
+    botrow = "| " +mu +" | " +kl+" | " +it+" | " +ch+" | " +ff+" | " +ge+" | " +ko+" | " +kk+" |\n\n"
+    attributes_print = "**Attributes:** \n"
+    for attribute in attributeList:
+        attributes_print += str(attribute[0]) + "  " + str(attribute[1]) + "\n"
+
+    send_message(message.channel, header+"\n"+toprow+"\n"+botrow+ attributes_print)
 
 def command_delete(message, args):
     if(len(args) < 1):
@@ -121,7 +124,7 @@ def command_rd(message, args):
         send_message(message.channel, "User has no character!")
         return
     charname = helper.remove_prefix(db.get_selected_char(message.author), str(message.author))
-    charEntry = db.db_get_char(message.author, charname)[0]
+    charEntry = db.db_get_char(message.author, charname)
     res = dice.roll_dsa(args, charEntry)
     send_message(message.channel, res)
 
@@ -131,6 +134,15 @@ def command_set_prefix(message, args):
         return
     success = db.db_set_prefix(message.guild, args[0])
     send_message(message.channel, success)
+
+def set_attribute(message, args):
+    if len(args) < 3:
+        send_message(message.channel, "too few arguments!")
+    if not is_int(args[2]):
+        send_message(message.channel, "second arg has to be an integer!")
+    success = db.db_update_attribute(message.author, args[1], args[2])#first param is "attribute"
+    send_message(message.channel, success)
+
 
 
 def parse_msg(message):
@@ -177,6 +189,9 @@ def parse_msg(message):
 
     elif(s.startswith("prefix")):
         command_set_prefix(message, args)
+
+    elif(s.startswith("set attribute")):
+        set_attribute(message, args)
         
 
 

@@ -7,7 +7,7 @@ import logging
 import queue
 import glob_vars
 
-
+STATUS_MESSAGE = " frustrated screams.."
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -16,6 +16,7 @@ client = discord.Client()
 @client.event
 async def on_ready():
     logging.info(f'{client.user} has connected to Discord!')
+    await client.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name=STATUS_MESSAGE))
     for guild in client.guilds:
         logging.info(guild)
 

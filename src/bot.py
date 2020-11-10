@@ -23,7 +23,7 @@ def received_msg(message):
 
 
 def send_message(channel,content):
-    n = 1000
+    n = 1900
     msgs = [content[i:i+n] for i in range(0, len(content), n)]
     for msg in msgs:
         glob_vars.send_message(channel, msg)

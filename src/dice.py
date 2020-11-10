@@ -1,5 +1,6 @@
 import random
 import re
+import helper
 import logging
 
 
@@ -9,6 +10,7 @@ no_errors = True
 def roll_dsa(args, statlist):
     global no_errors
     no_errors = True
+    charname = helper.remove_prefix(statlist[0], statlist[1]).capitalize()
     statlist = statlist[2:]
     res = replace_stats(args, statlist)
     for i in range(len(res)):
@@ -29,7 +31,7 @@ def roll_dsa(args, statlist):
         result = "You **failed!**"
     if len(res) == 3:  
         result = ""
-    output = "You have **" + str(rest) +"** left! "+result
+    output = "**"+charname + "** rolled the dice and has **" + str(rest) +"** left! "+result
     stat_print = "\n\nStats:   "+str(res[0])+ "  " +str(res[1])+ "  "+str(res[2]) 
     if len(res) == 4:
         stat_print += "  "+str(o_rest)

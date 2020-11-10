@@ -8,6 +8,7 @@ import queue
 import glob_vars
 
 STATUS_MESSAGE = " frustrated screams.."
+USERNAME = "Rolbert 🎲"
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -17,6 +18,11 @@ client = discord.Client()
 async def on_ready():
     logging.info(f'{client.user} has connected to Discord!')
     await client.change_presence(activity=discord.Activity(type=discord.ActivityType.listening, name=STATUS_MESSAGE))
+    try:
+        await client.user.edit(username=USERNAME)
+    except:
+        print("couldnt change username")
+        
     for guild in client.guilds:
         logging.info(guild)
 

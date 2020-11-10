@@ -16,15 +16,21 @@ def roll_dsa(args, statlist):
     if not no_errors: 
         return "Oops, something went wrong!"
     d =[0,0,0]
-    rest = res[3]
+    rest = 0
+
+    if len(res) == 4:
+        rest = res[3]
+    o_rest = rest
     for i in range(3):
         d[i] = roll_dice(20)        
         rest += min((res[i] - d[i]),0)       
     result = "succeeded!"
     if rest < 0:
         result = "failed!"
-    output = "You have **" + str(rest) +"** left, You **"+result+"**\nResults: **" + str(d[0]) +"**  **" + str(d[1]) +"**  **" + str(d[2]) + "**"
-    stat_print = "\n\nStats:  "+str(res[0])+ ", " +str(res[1])+ ", "+str(res[2]) + ", " + str(res[3])
+    output = "You have **" + str(rest) +"** left, You **"+result+"**\n\nResults: **" + str(d[0]) +"**  **" + str(d[1]) +"**  **" + str(d[2]) + "**"
+    stat_print = "\nStats:  "+str(res[0])+ ", " +str(res[1])+ ", "+str(res[2]) 
+    if len(res) == 4:
+        stat_print += ", "+str(o_rest)
     return (output + stat_print)
 
 

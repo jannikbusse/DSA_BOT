@@ -136,7 +136,7 @@ def command_set_prefix(message, args):
     send_message(message.channel, success)
 
 def set_attribute(message, args):
-    if len(args) < 3:
+    if len(args) < 4:
         send_message(message.channel, "too few arguments!")
     if not is_int(args[2]):
         send_message(message.channel, "second arg has to be an integer!")

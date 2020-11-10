@@ -23,7 +23,11 @@ def received_msg(message):
 
 
 def send_message(channel,content):
-    glob_vars.send_message(channel, content)
+    n = 1000
+    msgs = [content[i:i+n] for i in range(0, len(content), n)]
+    for msg in msgs:
+        glob_vars.send_message(channel, msg)
+        time.sleep(0.1)
 
 def command_register(message, args):
     if(len(args) < 1):
@@ -105,8 +109,8 @@ def command_roll(message, s, args):
     s = helper.remove_prefix(s, "roll")
     if(len(args) < 1):
         s = "w20"
-    (full, res) = dice.simulate_dice(s)
-    send_message(message.channel, "Results:" + full + " =\n **" + str(res)+"**")
+    res = dice.simulate_dice(s)
+    send_message(message.channel, res)
 
 def command_set_prefix(message, args):
     if(len(args) < 1):

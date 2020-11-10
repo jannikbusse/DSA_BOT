@@ -8,13 +8,17 @@ no_errors = True
 def simulate_dice(st):
     global no_errors
     no_errors = True
+    if not is_sanitized_input(st):
+        return "numbers are too big!"
     r, r_print = parse_dice(st)
     res = parse_eq(r)
-
     if not no_errors:
-        r_print = "Error in string!"
-        res = ""
-    return (r_print,res)
+        return "Error in string! Could not parse.."
+    return "Results:" + r_print + " =\n **" + str(res)+"**"
+
+def is_sanitized_input(st):
+    x = re.findall('[0-9]{6}', st)
+    return (len(x) <= 0)
 
 def replace_stats(st:str, statList) -> str:
     stats = ["mu","kl","in","ch","ff","ge", "ko", "kk"]
@@ -34,6 +38,7 @@ def parse_atomic(s):
         return 0
 
 def parse_dice(s):
+    global no_errors
     s_print = s
     p = re.compile("[0-9]*w[0-9]*")
     for m in p.finditer(s):
@@ -43,16 +48,18 @@ def parse_dice(s):
         pre, post = re.compile(r'w').split(mid)
         if pre == "":
             pre = 1
+        if int(pre) > 999: #dont let ppl roll too often!
+            pre = 0
+            no_errors = False
         if post == "":
             post = 20
-        total = ""
+        total = 0
         total_print = ""
         for i in range(int(pre)):
-            d_res = str(roll_dice(int(post)))
+            d_res = roll_dice(int(post))
             total += d_res
-            total_print = total_print +  "**" + d_res + "**"
+            total_print = total_print +  "**" + str(d_res) + "**"
             if not i == int(pre)-1:
-                total += " + "
                 total_print += " + "
         s = left + "( " + str(total) + " ) " + right
         s_print = left + " [ " + str(total_print) + " ] " + right
@@ -61,6 +68,8 @@ def parse_dice(s):
 
 def parse_eq(s): 
     global no_errors
+    if not no_errors:
+        return 0
 
     comps = []    
     if ')' in s:

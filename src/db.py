@@ -47,6 +47,13 @@ def check_char_has_attribute(cID, uID, attribute):
         return True
     return False   
 
+def get_attribute_number(cID, uID):
+    cID = str(cID)
+    uID = str(uID)
+    c.execute("SELECT COUNT(*) FROM attributes WHERE cID = ? AND uID = ?", (cID, uID))
+    res = c.fetchone()[0]
+    return res-8
+
 def get_selected_char(uID):
     uID = str(uID)
     c.execute("SELECT sChar FROM user WHERE uID=?", (uID,))
@@ -106,8 +113,12 @@ def db_update_attribute(uID, attribute, value):#attribute = [name,dep1,dep2,dep3
     already_exists = check_char_has_attribute(selected, uID, attribute[0])
 
     if not already_exists:
-        create_attribute_from_char(selected, uID, attribute, value)
-        return "**"+str(attribute[0]) +"** has been created with **" + str(value) + "**!"
+        attributeNumber = get_attribute_number(selected, uID)
+        if attributeNumber < glob_vars.MAX_ATTRIBUTE_COUNT:
+            create_attribute_from_char(selected, uID, attribute, value)
+            return "**"+str(attribute[0]) +"** has been created with **" + str(value) + "**!"
+        else:
+            return "**"+str(attribute[0]) +"** has not been created! **"+selected+"** is too powerful!\nYou can remove attributes by using the'remove' command!" 
 
     else:
         update_attribute_from_char(selected,uID, attribute, value)
@@ -153,6 +164,15 @@ def db_register_char(user, charname):
 
     conn.commit()
     return "Registered successfully"
+
+def db_remove_attribute(cID, uID, attribute):
+    uID = str(uID)
+    cID = str(cID)
+    attribute = str(attribute)
+    c.execute("DELETE FROM attributes WHERE cID =? AND uID = ? AND attribute = ?",(cID, uID, attribute))  
+    conn.commit()
+    return "Removed the attribute **" + attribute +"**!"
+
 
 def printTable():
     print("\ntable:")

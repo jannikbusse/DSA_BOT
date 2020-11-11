@@ -51,17 +51,25 @@ def command_register(message, args):
         send_message(message.channel, "too few arguments!")
         return
     charname = args[0]
+    charNumber = len(db.db_get_char_list(message.author))
+    if charNumber >= glob_vars.MAX_CHAR_COUNT:
+        send_message(message.channel, "You have too many characters!\nYou can delete one by using the 'delete' command")
+        return
     success = db.db_register_char(message.author, charname)
     send_message(message.channel,success)
 
 def command_chars(message):
     chars = db.db_get_char_list(message.author)
+    selected = db.get_selected_char(message.author)
     res = ""
     for char in chars:
-        res = res + char + "\n"
+        if char == selected:
+            res +="=>"
+        res = res + char.capitalize() + "\n"
     if res == "":
         res = "No chars in database!"
-    send_message(message.channel,res)
+    msg = "You currently have "+ str(len(chars))+"/"+str(glob_vars.MAX_CHAR_COUNT) +" char(s)! \n\n" 
+    send_message(message.channel,msg + res)
 
 def command_char(message, args):
     charname = ""
@@ -85,7 +93,7 @@ def command_char(message, args):
     toprow = "| mu | kl | in | ch | ff | ge | ko | kk |"
     botrow = "| " +stat[0] +" | " +stat[1]+" | " +stat[2]+" | " +stat[3]+" | " +stat[4]+" | " +stat[5]+" | " +stat[6]+" | " +stat[7]+" |\n\n"
 
-    attributes_print = "**Attributes:** \n"
+    attributes_print = "**Attributes** ("+ str(db.get_attribute_number(charname, message.author))+"/"+ str(glob_vars.MAX_ATTRIBUTE_COUNT) +"): \n"
     for attribute in filter(lambda x: not x[0] in glob_vars.stats, attributeList):
         dependency_print = ""
         if not attribute[2] == "":
@@ -185,6 +193,19 @@ def command_set_prefix(message, args):
     success = db.db_set_prefix(message.guild, args[0])
     send_message(message.channel, success)
 
+def command_remove(message, args):
+    selected =  db.get_selected_char(message.author)
+    if selected == None:
+        send_message(message.channel, "User has no character selected!")
+        return
+    out = ""
+    for arg in args:
+        if arg not in glob_vars.stats:
+            out += db.db_remove_attribute(selected, message.author, arg) + "\n"
+    send_message(message.channel, out)
+
+
+
 
 def parse_msg(message):
     prefix = db.db_get_prefix(message.guild)
@@ -212,6 +233,9 @@ def parse_msg(message):
 
     elif(s.startswith("delete")):#/delete <charname>
         command_delete(message, args)
+
+    elif(s.startswith("remove")):
+        command_remove(message, args)
 
     elif(s.startswith("update")):#/update in <int> ch <y> ...
         command_update(message, args)  

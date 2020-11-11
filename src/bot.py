@@ -129,6 +129,9 @@ def command_update(message, args):
 
 def command_selected(message):
     selected = db.get_selected_char(message.author)
+    if selected == None:
+        send_message(message.channel, "User has no character!")
+        return
     send_message(message.channel, "Selected char for user " + str(message.author) + ": " + selected)
 
 def command_select(message, args):

@@ -65,7 +65,7 @@ def command_char(message, args):
     ge = helper.make_str_two_digits(charEntry[7])
     ko = helper.make_str_two_digits(charEntry[8])
     kk = helper.make_str_two_digits(charEntry[9])  
-    header = "-----------**"+ charname +"**-----------------"
+    header = "------------**"+ charname +"**-----------------"
     toprow = "| mu | kl | in | ch | ff | ge | ko | kk |"
     botrow = "| " +mu +" | " +kl+" | " +it+" | " +ch+" | " +ff+" | " +ge+" | " +ko+" | " +kk+" |\n\n"
     attributes_print = "**Attributes:** \n"
@@ -136,10 +136,12 @@ def command_set_prefix(message, args):
     send_message(message.channel, success)
 
 def set_attribute(message, args):
-    if len(args) < 4:
+    if len(args) < 3:
         send_message(message.channel, "too few arguments!")
+        return
     if not is_int(args[2]):
         send_message(message.channel, "second arg has to be an integer!")
+        return
     success = db.db_update_attribute(message.author, args[1], args[2])#first param is "attribute"
     send_message(message.channel, success)
 

@@ -50,21 +50,29 @@ def get_selected_char(uID):
     selected = c.fetchone()[0] #get cID from selected char   
     return selected
 
+def get_attribute(cID, attributeName):
+    cID = str(cID)
+    attributeName = str(attributeName)
+    res = None
+    c.execute("SELECT * FROM attributes WHERE cID=? AND attribute=?",(cID,attributeName))
+    res = c.fetchone()
+    return res
+
 def get_attribute_list(cID):
     cID = str(cID)
-    c.execute("SELECT attribute, value FROM attributes WHERE cID = ? ORDER BY length(attribute) DESC",(cID,))
+    c.execute("SELECT attribute, value, dep1, dep2, dep3 FROM attributes WHERE cID = ? ORDER BY length(attribute) DESC",(cID,))
     res = c.fetchall()
     return res
 
 
 def create_attribute_from_char(cID, attribute, value):
     cID = str(cID)
-    attribute = str(attribute)
-    c.execute("INSERT INTO attributes VALUES (?, ?, ?)", (cID, attribute, value))
+    
+    c.execute("INSERT INTO attributes VALUES (?, ?, ?, ?, ?, ?)", (cID, str(attribute[0]), value, str(attribute[1]),str(attribute[2]),str(attribute[3])))
     conn.commit()
 
 def update_attribute_from_char(cID, attribute, value):
-    c.execute("UPDATE attributes SET value =? WHERE cID=? AND attribute =?",(value,cID, attribute))
+    c.execute("UPDATE attributes SET value =?, dep1 =?, dep2 =?, dep3=? WHERE cID=? AND attribute =?",(value, str(attribute[1]), str(attribute[2]),str(attribute[3]),cID, str(attribute[0])))
     conn.commit()
 
 def createTable():
@@ -78,22 +86,21 @@ def createTable():
                 (cID PRIMARY KEY, uID, mu, kl, int, ch, ff, ge, ko, kk)''') #int = in!!!!!
 
     c.execute('''CREATE TABLE IF NOT EXISTS attributes
-                (cID, attribute, value)''') #int = in!!!!!
+                (cID, attribute, value, dep1, dep2, dep3)''') #int = in!!!!!
 
 
-def db_update_attribute(uID, attribute, value):
+def db_update_attribute(uID, attribute, value):#attribute = [name,dep1,dep2,dep3]
     selected = get_selected_char(uID)
-    if any(char.isdigit() for char in attribute): #check if string has number
-        return "oops, attribute cant contain a number!"
-    already_exists = check_char_has_attribute(selected, attribute)
+   
+    already_exists = check_char_has_attribute(selected, attribute[0])
 
     if not already_exists:
         create_attribute_from_char(selected, attribute, value)
-        return "**"+str(attribute) +"** has been created with **" + str(value) + "**!"
+        return "**"+str(attribute[0]) +"** has been created with **" + str(value) + "**!"
 
     else:
         update_attribute_from_char(selected, attribute, value)
-        return "**"+str(attribute) +"** has been set to **" + str(value) + "**!"
+        return "**"+str(attribute[0]) +"** has been set to **" + str(value) + "**!"
 
 
 def db_get_prefix(server):

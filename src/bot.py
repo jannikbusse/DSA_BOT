@@ -7,6 +7,7 @@ import time, threading
 import dice
 import helper
 import logging
+import re
 
 stats = ["mu","kl","in","ch","ff","ge", "ko", "kk"] #careful: in is int in the db!
 
@@ -20,6 +21,22 @@ def is_int(s):
 
 def received_msg(message):
     parse_msg(message)
+
+def parse_attribute_input(s):
+    
+    b = re.match(r'\A[a-zA-Z]+\([a-zA-Z]+,[a-zA-Z]+,[a-zA-Z]+\)\Z', s)
+    if b:        
+        at = re.search(r'([a-zA-Z]*?)\(', s).group(1)
+        res = re.search(r'\((.*?)\)',s).group(1)
+        
+        res = res.split(',')
+        print(res)
+        return(at,res[0], res[1], res[2])
+
+    if re.match(r'\A[a-zA-Z]+\Z',s):
+        return (s, "","","")
+
+    return None
 
 
 def send_message(channel,content):
@@ -64,9 +81,13 @@ def command_char(message, args):
     header = "-------------**"+ charname +"**-----------------"
     toprow = "| mu | kl | in | ch | ff | ge | ko | kk |"
     botrow = "| " +stat[0] +" | " +stat[1]+" | " +stat[2]+" | " +stat[3]+" | " +stat[4]+" | " +stat[5]+" | " +stat[6]+" | " +stat[7]+" |\n\n"
+
     attributes_print = "**Attributes:** \n"
     for attribute in filter(lambda x: not x[0] in glob_vars.stats, attributeList):
-        attributes_print += str(attribute[0]) + "  " + str(attribute[1]) + "\n"
+        dependency_print = ""
+        if not attribute[2] == "":
+            dependency_print = "("+attribute[2]+","+attribute[3]+","+attribute[4]+")"
+        attributes_print += str(attribute[0]) + dependency_print+"  " + str(attribute[1]) + "\n"
 
     send_message(message.channel, header+"\n"+toprow+"\n"+botrow+ attributes_print)
 
@@ -80,16 +101,26 @@ def command_delete(message, args):
 
 def command_update(message, args):
     out = ""
+    if not db.check_user_has_char(message.author):
+        send_message(message.channel, "User has no character!")
+        return
+
     for i in range(len(args))[::2]:
-        s = args[i] 
+        s = parse_attribute_input(args[i]) 
+        if s == None:
+            send_message(message.channel, "Oops, wrong arguments for " + args[i])
+            return
+
         if i+1 < len(args):            
             if not is_int(args[i+1]):
-                out +=  "arg for **"+ s +"** has to be an integer!\n"
+                out +=  "arg for **"+ s[0] +"** has to be an integer!\n"
                 continue
             attributeValue = int(args[i+1])
 
             out +=  db.db_update_attribute(message.author, s, attributeValue) + "\n"#first param is "attribute"
-            
+        else:
+            send_message(message.channel, "Oops, too few arguments for " + s[0])
+            return
 
     send_message(message.channel, out)
 
@@ -113,15 +144,31 @@ def command_roll(message, s, args):
     send_message(message.channel, res)
 
 def command_rd(message, args):
-    if len(args) != 3 and len(args) != 4:
+    if len(args) != 3 and len(args) != 4 and len(args) != 1:
         send_message(message.channel, "Wrong syntax!\n/rd <stat> <stat> <stat> <talent - optional>")
         return
-
     if not db.check_user_has_char(message.author):
         send_message(message.channel, "User has no character!")
         return
-    charname = helper.remove_prefix(db.get_selected_char(message.author), str(message.author))
+    
+    cID = db.get_selected_char(message.author)
+    charname = helper.remove_prefix(cID, str(message.author))
+
     charEntry = db.db_get_char(message.author, charname)
+    if len(args) == 1:
+        attribute = db.get_attribute(cID, args[0])
+        if attribute == None:
+            send_message(message.channel, "Oops, this attribute was not found on **"+charname +"**" )
+            return
+        if(attribute[3] == "" or attribute[4] == "" or attribute[5] == "" ):
+            send_message(message.channel, "Oops, **"+attribute[1]+"** has no dependencies at the moment!" )
+            return
+
+        args[0] = attribute[3]
+        args.append(attribute[4])
+        args.append(attribute[5])
+        args.append(attribute[1])    
+    
     res = dice.roll_dsa(args, charEntry)
     send_message(message.channel, res)
 

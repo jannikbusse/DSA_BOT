@@ -17,9 +17,6 @@ def roll_dsa(args, charInfo): # statlist is (charlist, attribute list according 
     statlist = statlist[2:]
 
     res = replace_attributes(args, attributelist)
-
-    print(res)
-
     for i in range(len(res)):
         res[i] = parse_eq(str(res[i]))
     if not no_errors: 
@@ -38,7 +35,7 @@ def roll_dsa(args, charInfo): # statlist is (charlist, attribute list according 
         result = "You **failed!**"
     if len(res) == 3:  
         result = ""
-    output = "**"+charname + "** rolled the dice and has **" + str(rest) +"** left! "+result
+    output = "**"+charname + "** rolled the dice for **"+ str(args[3]) + "**(" + str(args[0])+ "," +str(args[1])+ "," + str(args[2]) +") and has **" + str(rest) +"** left! "+result
     stat_print = "\n\nStats:   "+str(res[0])+ "  " +str(res[1])+ "  "+str(res[2]) 
     if len(res) == 4:
         stat_print += "  "+str(o_rest)
@@ -47,11 +44,11 @@ def roll_dsa(args, charInfo): # statlist is (charlist, attribute list according 
 
 
 def replace_attributes(args, attributes):
+    res  = args.copy()
     for attribute in attributes:
-        for i in range(len(args)):        
-            print("replacing " + attribute[0] + " with " + str(attribute[1]) + " in " + args[i])
-            args[i] = args[i].replace(str(attribute[0]), str(attribute[1]))
-    return args
+        for i in range(len(res)):        
+            res[i] = res[i].replace(str(attribute[0]), str(attribute[1]))
+    return res
 
 def replace_stats(args, statList) -> str:
     global no_errors

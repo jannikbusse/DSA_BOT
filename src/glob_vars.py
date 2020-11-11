@@ -2,6 +2,7 @@ import queue
 
 send_queue = queue.Queue() 
 bot_receive_queue = queue.Queue()
+stats = ["mu","kl","in","ch","ff","ge", "ko", "kk"]
 
 prefix = '/'
 

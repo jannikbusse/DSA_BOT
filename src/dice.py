@@ -2,6 +2,7 @@ import random
 import re
 import helper
 import logging
+import glob_vars
 
 
 no_errors = True
@@ -14,8 +15,8 @@ def roll_dsa(args, charInfo): # statlist is (charlist, attribute list according 
     attributelist = charInfo[1]
     charname = helper.remove_prefix(statlist[0], statlist[1]).capitalize()
     statlist = statlist[2:]
-    res = replace_stats(args, statlist)
-    res = replace_attributes(res, attributelist)
+
+    res = replace_attributes(args, attributelist)
 
     print(res)
 
@@ -53,8 +54,8 @@ def replace_attributes(args, attributes):
     return args
 
 def replace_stats(args, statList) -> str:
-    stats = ["mu","kl","in","ch","ff","ge", "ko", "kk"]
     global no_errors
+    stats = glob_vars.stats
     for i in range(3):
         for s in range(len(stats)):
             args[i] = args[i].replace(stats[s], str(statList[s]))

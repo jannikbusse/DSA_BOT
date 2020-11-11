@@ -57,19 +57,15 @@ def command_char(message, args):
         charname = args[0]
     charEntry, attributeList = db.db_get_char(message.author, charname)
     charEntry = charEntry[0]
-    mu = helper.make_str_two_digits(charEntry[2])
-    kl = helper.make_str_two_digits(charEntry[3])
-    it = helper.make_str_two_digits(charEntry[4])
-    ch = helper.make_str_two_digits(charEntry[5])
-    ff = helper.make_str_two_digits(charEntry[6])
-    ge = helper.make_str_two_digits(charEntry[7])
-    ko = helper.make_str_two_digits(charEntry[8])
-    kk = helper.make_str_two_digits(charEntry[9])  
-    header = "------------**"+ charname +"**-----------------"
+    stat = [] 
+    for s in glob_vars.stats:
+        stat.append(helper.make_str_two_digits(str(helper.attribute_value_from_list(attributeList, s))))
+ 
+    header = "-------------**"+ charname +"**-----------------"
     toprow = "| mu | kl | in | ch | ff | ge | ko | kk |"
-    botrow = "| " +mu +" | " +kl+" | " +it+" | " +ch+" | " +ff+" | " +ge+" | " +ko+" | " +kk+" |\n\n"
+    botrow = "| " +stat[0] +" | " +stat[1]+" | " +stat[2]+" | " +stat[3]+" | " +stat[4]+" | " +stat[5]+" | " +stat[6]+" | " +stat[7]+" |\n\n"
     attributes_print = "**Attributes:** \n"
-    for attribute in attributeList:
+    for attribute in filter(lambda x: not x[0] in glob_vars.stats, attributeList):
         attributes_print += str(attribute[0]) + "  " + str(attribute[1]) + "\n"
 
     send_message(message.channel, header+"\n"+toprow+"\n"+botrow+ attributes_print)
@@ -83,18 +79,19 @@ def command_delete(message, args):
     send_message(message.channel, success)
 
 def command_update(message, args):
-    for i in range(len(args)):
+    out = ""
+    for i in range(len(args))[::2]:
         s = args[i] 
-        if s in stats and i+1 < len(args):            
-            if is_int(args[i+1]):               
-                if s == "in" :
-                    s = "int"
-                               
-                statnumber = int(args[i+1])
-                success = db.db_update_stats(message.author, s, statnumber)
-                send_message(message.channel, success)
-            else:
-                send_message(message.channel, "Wrong arg for " + s +": " + args[i+1])
+        if i+1 < len(args):            
+            if not is_int(args[i+1]):
+                out +=  "arg for **"+ s +"** has to be an integer!\n"
+                continue
+            attributeValue = int(args[i+1])
+
+            out +=  db.db_update_attribute(message.author, s, attributeValue) + "\n"#first param is "attribute"
+            
+
+    send_message(message.channel, out)
 
 def command_selected(message):
     selected = db.get_selected_char(message.author)
@@ -134,17 +131,6 @@ def command_set_prefix(message, args):
         return
     success = db.db_set_prefix(message.guild, args[0])
     send_message(message.channel, success)
-
-def set_attribute(message, args):
-    if len(args) < 3:
-        send_message(message.channel, "too few arguments!")
-        return
-    if not is_int(args[2]):
-        send_message(message.channel, "second arg has to be an integer!")
-        return
-    success = db.db_update_attribute(message.author, args[1], args[2])#first param is "attribute"
-    send_message(message.channel, success)
-
 
 
 def parse_msg(message):
@@ -192,8 +178,6 @@ def parse_msg(message):
     elif(s.startswith("prefix")):
         command_set_prefix(message, args)
 
-    elif(s.startswith("set attribute")):
-        set_attribute(message, args)
         
 
 

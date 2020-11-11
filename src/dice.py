@@ -31,16 +31,20 @@ def roll_dsa(args, charInfo): # statlist is (charlist, attribute list according 
         d[i] = roll_dice(20)        
         rest += min((res[i] - d[i]),0)     
     result = "You **succeeded!**"
+    attribute_overview_print = ""
+    stat_print = str(res[0])+ "  " +str(res[1])+ "  "+str(res[2]) 
     if rest < 0:
         result = "You **failed!**"
     if len(res) == 3:  
         result = ""
-    output = "**"+charname + "** rolled the dice for **"+ str(args[3]) + "**(" + str(args[0])+ "," +str(args[1])+ "," + str(args[2]) +") and has **" + str(rest) +"** left! "+result
-    stat_print = "\n\nStats:   "+str(res[0])+ "  " +str(res[1])+ "  "+str(res[2]) 
     if len(res) == 4:
-        stat_print += "  "+str(o_rest)
+        attribute_overview_print = "for **"+ str(args[3]) + "**(" + str(args[0])+ "," +str(args[1])+ "," + str(args[2]) +")"
+        stat_print = str(o_rest) + " " + stat_print
+    output = "**"+charname + "** rolled the dice "+attribute_overview_print+" and has **" + str(rest) +"** left! "+result
+    
+        
     result_print = "\nResults: **" + str(d[0]) +"**  **" + str(d[1]) +"**  **" + str(d[2]) + "**"
-    return (output + stat_print + result_print)
+    return (output + "\n\nStats:   "+stat_print + result_print)
 
 
 def replace_attributes(args, attributes):

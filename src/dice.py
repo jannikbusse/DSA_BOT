@@ -51,7 +51,7 @@ def replace_attributes(args, attributes):
     res  = args.copy()
     for attribute in attributes:
         for i in range(len(res)):        
-            res[i] = res[i].replace(str(attribute[0]), str(attribute[1]))
+            res[i] = str(res[i]).replace(str(attribute[0]), str(attribute[1]))
     return res
 
 def replace_stats(args, statList) -> str:

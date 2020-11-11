@@ -40,7 +40,7 @@ def parse_attribute_input(s):
 
 
 def send_message(channel,content):
-    n = 1900
+    n = 1000
     msgs = [content[i:i+n] for i in range(0, len(content), n)]
     for msg in msgs:
         glob_vars.send_message(channel, msg)
@@ -65,14 +65,17 @@ def command_chars(message):
 
 def command_char(message, args):
     charname = ""
-    if not db.check_user_has_char(message.author):
-        send_message(message.channel, "User has no character!")
+
+    selected_char = db.get_selected_char(message.author)
+    if selected_char == None:
+        send_message(message.channel, "User has no character!")  
         return
     if len(args) < 1:
-        charname = helper.remove_prefix(db.get_selected_char(message.author), str(message.author))
+        charname = selected_char
     else:
         charname = args[0]
-    charEntry, attributeList = db.db_get_char(message.author, charname)
+    
+    charEntry, attributeList = db.db_get_char(charname, message.author)
     charEntry = charEntry[0]
     stat = [] 
     for s in glob_vars.stats:
@@ -96,7 +99,7 @@ def command_delete(message, args):
         send_message(message.channel, "too few arguments!")
         return
     charname = args[0]
-    success = db.db_remove_char(message.author, charname)
+    success = db.db_remove_char(charname, message.author)
     send_message(message.channel, success)
 
 def command_update(message, args):
@@ -126,7 +129,7 @@ def command_update(message, args):
 
 def command_selected(message):
     selected = db.get_selected_char(message.author)
-    send_message(message.channel, "Selected char for user " + str(message.author) + ": " + helper.remove_prefix(selected,str(message.author)))
+    send_message(message.channel, "Selected char for user " + str(message.author) + ": " + selected)
 
 def command_select(message, args):
     if(len(args) < 1):
@@ -152,23 +155,23 @@ def command_rd(message, args):
         return
     
     cID = db.get_selected_char(message.author)
-    charname = helper.remove_prefix(cID, str(message.author))
+    
 
-    charEntry = db.db_get_char(message.author, charname)
+    charEntry = db.db_get_char(cID, message.author)
     if len(args) == 1:
-        attribute = db.get_attribute(cID, args[0])
+        attribute = db.get_attribute(cID,message.author, args[0])
         if attribute == None:
-            send_message(message.channel, "Oops, this attribute was not found on **"+charname +"**" )
+            send_message(message.channel, "Oops, this attribute was not found on **"+cID +"**" )
             return
         if(attribute[3] == "" or attribute[4] == "" or attribute[5] == "" ):
             send_message(message.channel, "Oops, **"+attribute[1]+"** has no dependencies at the moment!" )
             return
-
-        args[0] = attribute[3]
-        args.append(attribute[4])
+        args[0] = attribute[4]
         args.append(attribute[5])
-        args.append(attribute[1])    
-    
+        args.append(attribute[6])
+        args.append(attribute[2])    
+    print(args)
+    print(charEntry)
     res = dice.roll_dsa(args, charEntry)
     send_message(message.channel, res)
 
@@ -231,7 +234,9 @@ def parse_msg(message):
 
 def check_queue():
     try:
-        send_item = glob_vars.bot_receive_queue.get(False)       
+        send_item = glob_vars.bot_receive_queue.get(False)  
+        if send_item.content == "exit":
+            glob_vars.terminate = True
         received_msg(send_item)
     except queue.Empty:
         send_item = None
@@ -240,7 +245,7 @@ def start_bot():
     
     logging.info("Started bot!")
     db.init_db()
-    while(True):
+    while(not glob_vars.terminate):
         time.sleep(0.2)
         check_queue()
         

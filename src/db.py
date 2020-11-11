@@ -5,13 +5,15 @@ import random
 import discord
 import helper
 import logging
+import glob_vars
 
 conn = None
 c = None
 
-def check_char_exists(uID, charname):
-    cID = str(uID) + str(charname)
-    c.execute("SELECT EXISTS(SELECT * FROM chartable WHERE cID=?)", (cID,))
+def check_char_exists(uID, cID):
+    uID = str(uID)
+    cID = str(cID)
+    c.execute("SELECT EXISTS(SELECT * FROM chartable WHERE cID=? AND uID = ?)", (cID, uID))
     if(c.fetchone()[0]):
         return True
     return False     
@@ -36,10 +38,11 @@ def check_server_exists(sID):
         return True
     return False   
     
-def check_char_has_attribute(cID, attribute):
+def check_char_has_attribute(cID, uID, attribute):
     cID = str(cID)
+    uID = str(uID)
     attribute = str(attribute)
-    c.execute("SELECT EXISTS(SELECT * FROM attributes WHERE cID=? AND attribute=?)", (cID, attribute) )
+    c.execute("SELECT EXISTS(SELECT * FROM attributes WHERE cID=? AND uID =? AND attribute=?)", (cID, uID, attribute) )
     if(c.fetchone()[0]):
         return True
     return False   
@@ -47,32 +50,40 @@ def check_char_has_attribute(cID, attribute):
 def get_selected_char(uID):
     uID = str(uID)
     c.execute("SELECT sChar FROM user WHERE uID=?", (uID,))
-    selected = c.fetchone()[0] #get cID from selected char   
-    return selected
+    selected = c.fetchone() #get cID from selected char   
+    if selected == None:
+        return None
+    return selected[0]
 
-def get_attribute(cID, attributeName):
+def get_attribute(cID, uID, attributeName):
     cID = str(cID)
+    uID = str(uID)
     attributeName = str(attributeName)
     res = None
-    c.execute("SELECT * FROM attributes WHERE cID=? AND attribute=?",(cID,attributeName))
+    c.execute("SELECT * FROM attributes WHERE cID=? AND uID = ? AND attribute=?",(cID, uID,attributeName))
     res = c.fetchone()
     return res
 
-def get_attribute_list(cID):
+def get_attribute_list(cID, uID):
     cID = str(cID)
-    c.execute("SELECT attribute, value, dep1, dep2, dep3 FROM attributes WHERE cID = ? ORDER BY length(attribute) DESC",(cID,))
+    uID = str(uID
+    )
+    c.execute("SELECT attribute, value, dep1, dep2, dep3 FROM attributes WHERE cID = ? AND uID = ? ORDER BY length(attribute) DESC",(cID,uID))
     res = c.fetchall()
     return res
 
 
-def create_attribute_from_char(cID, attribute, value):
+def create_attribute_from_char(cID,uID, attribute, value):
     cID = str(cID)
+    uID = str(uID)
     
-    c.execute("INSERT INTO attributes VALUES (?, ?, ?, ?, ?, ?)", (cID, str(attribute[0]), value, str(attribute[1]),str(attribute[2]),str(attribute[3])))
+    c.execute("INSERT INTO attributes VALUES (?, ?, ?, ?, ?, ?, ?)", (cID, uID, str(attribute[0]), value, str(attribute[1]),str(attribute[2]),str(attribute[3])))
     conn.commit()
 
-def update_attribute_from_char(cID, attribute, value):
-    c.execute("UPDATE attributes SET value =?, dep1 =?, dep2 =?, dep3=? WHERE cID=? AND attribute =?",(value, str(attribute[1]), str(attribute[2]),str(attribute[3]),cID, str(attribute[0])))
+def update_attribute_from_char(cID, uID, attribute, value):
+    uID = str(uID)
+    
+    c.execute("UPDATE attributes SET value =?, dep1 =?, dep2 =?, dep3=? WHERE cID=? AND uID =? AND attribute =?",(value, str(attribute[1]), str(attribute[2]),str(attribute[3]),cID, uID, str(attribute[0])))
     conn.commit()
 
 def createTable():
@@ -83,23 +94,23 @@ def createTable():
                 (sID PRIMARY KEY, prefix )''')
 
     c.execute('''CREATE TABLE IF NOT EXISTS chartable
-                (cID PRIMARY KEY, uID, mu, kl, int, ch, ff, ge, ko, kk)''') #int = in!!!!!
+                (cID , uID , PRIMARY KEY(cID, uID) )''') #int = in!!!!!
 
     c.execute('''CREATE TABLE IF NOT EXISTS attributes
-                (cID, attribute, value, dep1, dep2, dep3)''') #int = in!!!!!
+                (cID, uID, attribute, value, dep1, dep2, dep3)''') #int = in!!!!!
 
 
 def db_update_attribute(uID, attribute, value):#attribute = [name,dep1,dep2,dep3]
     selected = get_selected_char(uID)
    
-    already_exists = check_char_has_attribute(selected, attribute[0])
+    already_exists = check_char_has_attribute(selected, uID, attribute[0])
 
     if not already_exists:
-        create_attribute_from_char(selected, attribute, value)
+        create_attribute_from_char(selected, uID, attribute, value)
         return "**"+str(attribute[0]) +"** has been created with **" + str(value) + "**!"
 
     else:
-        update_attribute_from_char(selected, attribute, value)
+        update_attribute_from_char(selected,uID, attribute, value)
         return "**"+str(attribute[0]) +"** has been set to **" + str(value) + "**!"
 
 
@@ -129,13 +140,13 @@ def db_set_prefix(server, prefix):
 
 def db_register_char(user, charname):
     user = str(user)
-    charname = str(charname)
-    cID = user + charname
+    cID = str(charname)
     if (check_char_exists(user, charname)):
         return  "error double char ID: " + str(charname)
 
-    c.execute("INSERT INTO chartable VALUES (?, ?, 0, 0, 0, 0 ,0 ,0 ,0 ,0)", (cID, user))
-    
+    c.execute("INSERT INTO chartable VALUES (?, ?)", (cID, user))
+    for a in glob_vars.stats:
+        create_attribute_from_char(cID, user, [a,"","",""], 0)
 
     if not check_user_exists(user):
         c.execute("INSERT INTO user VALUES (?, ?)", (user, cID))
@@ -150,11 +161,13 @@ def printTable():
     for row in rows:
         print(row)
 
-def db_get_char(uID, charname):
-    cID = str(uID) + str(charname)
-    c.execute("SELECT * FROM chartable WHERE cID=?",(cID,))
+def db_get_char(cID, uID):
+    uID = str(uID)
+    cID = str(cID)
+    print(uID + "  und charid ist: " +cID)
+    c.execute("SELECT * FROM chartable WHERE cID=? AND uID = ?",(cID,uID))
     res = c.fetchall()
-    attributes = get_attribute_list(cID)
+    attributes = get_attribute_list(cID, uID)
 
     return (res, attributes)
 
@@ -164,22 +177,24 @@ def db_get_char_list(uID):
     rows = c.fetchall()
     res = []
     for row in rows:
-        res.append(helper.remove_prefix(row[0], uID))
+        res.append(row[0])
     return res
 
-def db_remove_char(uID, charname):
+def db_remove_char(cID, uID):
     uID = str(uID)
-    cID = str(uID) + str(charname)
+    cID = str(cID)
     res = "Trying to remove char - something happened!"
-    if not check_char_exists(uID, charname):
+    if not check_char_exists(uID, cID):
         return "char could not be found!"
-    c.execute("DELETE FROM chartable WHERE cID =?",(cID,))   
+    c.execute("DELETE FROM chartable WHERE cID =? AND uID = ?",(cID, uID))  
+    c.execute("DELETE FROM attributes WHERE cID =? AND uID = ?",(cID, uID))   
+ 
     res = "char has been deleted!" 
     if not check_user_has_char(uID):
         c.execute("DELETE FROM user WHERE uID =?",(uID,))
         res = "char has been deleted. User was deleted aswell!"
     elif get_selected_char(uID) == cID:
-        next_selected = db_get_char_list(uID)[0]
+        next_selected = db_get_char_list(cID, uID)[0]
         res = "char has been deleted - new selected char: " + next_selected
 
     conn.commit()
@@ -194,15 +209,15 @@ def db_update_stats(uID, stat, statnumber:int):
     conn.commit()
     return "updated " + stat + " sucessfully: " + str(statnumber)
 
-def db_select_char(uID, charname):
+def db_select_char(uID, cID):
     uID = str(uID)
-    charname = str(charname)
-    cID = uID + charname
-    if not check_char_exists(uID, charname):
+    cID = str(cID)
+   
+    if not check_char_exists(uID, cID):
         return "Could not find char in database!"
     c.execute("UPDATE user SET sChar=? WHERE uID=?",(cID,uID))
     conn.commit()
-    return "Selected " + charname + " successfully!"
+    return "Selected " + cID + " successfully!"
 
     
 

@@ -35,6 +35,8 @@ async def on_message(message):
     
 @tasks.loop(seconds=0.2)
 async def loop():
+    if glob_vars.terminate:
+        exit() # not a clean way to exit!
     try:
         send_item = glob_vars.send_queue.get(False)
         logging.info(send_item)

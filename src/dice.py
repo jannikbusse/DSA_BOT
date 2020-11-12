@@ -44,7 +44,7 @@ def roll_dsa(args, charInfo): # statlist is (charlist, attribute list according 
     
         
     result_print = "\nResults: **" + str(d[0]) +"**  **" + str(d[1]) +"**  **" + str(d[2]) + "**"
-    return (output + "\n\nStats:   "+stat_print + result_print)
+    return (output + "\n\nStats: "+stat_print + result_print)
 
 
 def replace_attributes(args, attributes):

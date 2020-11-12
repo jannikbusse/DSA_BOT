@@ -124,6 +124,14 @@ def db_update_attribute(uID, attribute, value):#attribute = [name,dep1,dep2,dep3
         update_attribute_from_char(selected,uID, attribute, value)
         return "**"+str(attribute[0]) +"** has been set to **" + str(value) + "**!"
 
+def db_rename_character(cID, uID, newCID):#TODO BAD IDAE BECAUSE GARBAGE DATABASE
+    cID = str(cID)
+    uID = str(uID)
+    newCID = str(newCID)
+    c.execute("UPDATE chartable SET cID =? WHERE cID=? AND uID = ?",(newCID,cID, uID))
+    conn.commit()
+    return "**"+cID.capitalize() + "** has been changed to **" + newCID.capitalize() +"**!"
+
 
 def db_get_prefix(server):
     sID = str(server.id)

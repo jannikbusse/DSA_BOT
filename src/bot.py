@@ -27,14 +27,11 @@ def parse_attribute_input(s):
     b = re.match(r'\A[a-zA-Z]+\([a-zA-Z]+,[a-zA-Z]+,[a-zA-Z]+\)\Z', s)
     if b:        
         at = re.search(r'([a-zA-Z]*?)\(', s).group(1)
-        res = re.search(r'\((.*?)\)',s).group(1)
-        
+        res = re.search(r'\((.*?)\)',s).group(1)        
         res = res.split(',')
-        print(res)
         return(at,res[0], res[1], res[2])
 
     if re.match(r'\A[a-zA-Z | - | _]+\Z',s):
-        print("ASDASDASD")
         return (s, "","","")
 
     return None
@@ -93,7 +90,7 @@ def command_char(message, args):
     for s in glob_vars.stats:
         stat.append(helper.make_str_two_digits(str(helper.attribute_value_from_list(attributeList, s))))
  
-    header = "-------------**"+ charname +"**-----------------"
+    header = "-------------**"+ charname.capitalize() +"**-----------------"
     toprow = "| mu | kl | in | ch | ff | ge | ko | kk |"
     botrow = "| " +stat[0] +" | " +stat[1]+" | " +stat[2]+" | " +stat[3]+" | " +stat[4]+" | " +stat[5]+" | " +stat[6]+" | " +stat[7]+" |\n\n"
 
@@ -185,8 +182,6 @@ def command_rd(message, args):
         args.append(attribute[5])
         args.append(attribute[6])
         args.append(attribute[2])    
-    print(args)
-    print(charEntry)
     res = dice.roll_dsa(args, charEntry)
     send_message(message.channel, res)
 
@@ -208,7 +203,21 @@ def command_remove(message, args):
             out += db.db_remove_attribute(selected, message.author, arg) + "\n"
     send_message(message.channel, out)
 
-
+def command_rename(message, args):#FIX DATABASE FIRST!!
+    send_message(message.channel, "This function is not available because my database has been set up very poorly!")
+    return
+    if len(args) < 2:
+        send_message(message.channel, "Too few arguments!")
+    currentName = args[0]
+    newName = args[1]
+    if not db.check_char_exists(message.author, currentName):
+        send_message(message.channel, currentName + " could not be found!")
+        return
+    if db.check_char_exists(message.author, newName):
+        send_message(message.channel, newName + " is already in use by one of your characters!")
+        return
+    success = db.db_rename_character(currentName, message.author, newName)
+    send_message(message.channel, success)
 
 
 def parse_msg(message):
@@ -258,6 +267,9 @@ def parse_msg(message):
 
     elif(s.startswith("prefix")):
         command_set_prefix(message, args)
+
+    elif(s.startswith("rename")):#FIX DATABASE FIRST!!
+        command_rename(message, args)
 
         
 

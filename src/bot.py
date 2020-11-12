@@ -82,7 +82,10 @@ def command_char(message, args):
         charname = selected_char
     else:
         charname = args[0]
-    
+    if not db.check_char_exists(message.author, charname):
+        send_message(message.channel, "This character could not be found in the database!")  
+        return
+
     charEntry, attributeList = db.db_get_char(charname, message.author)
     charEntry = charEntry[0]
     stat = [] 

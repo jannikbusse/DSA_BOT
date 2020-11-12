@@ -177,8 +177,8 @@ def command_rd(message, args):
         if attribute == None:
             send_message(message.channel, "Oops, this attribute was not found on **"+cID +"**" )
             return
-        if(attribute[3] == "" or attribute[4] == "" or attribute[5] == "" ):
-            send_message(message.channel, "Oops, **"+attribute[1]+"** has no dependencies at the moment!" )
+        if(attribute[6] == "" or attribute[4] == "" or attribute[5] == "" ):
+            send_message(message.channel, "Oops, **"+attribute[2]+"** has no dependencies at the moment!" )
             return
         args[0] = attribute[4]
         args.append(attribute[5])

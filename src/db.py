@@ -138,7 +138,6 @@ def db_get_prefix(server):
     c.execute("SELECT prefix FROM server WHERE sID=?",(sID,))
     res = c .fetchall()
     if len(res) == 0:
-        print("no pre!")
         return '/'
     
     return res[0][0]
@@ -222,7 +221,7 @@ def db_remove_char(cID, uID):
         c.execute("DELETE FROM user WHERE uID =?",(uID,))
         res = "char has been deleted. User was deleted aswell!"
     elif get_selected_char(uID) == cID:
-        next_selected = db_get_char_list(cID, uID)[0]
+        next_selected = db_get_char_list(uID)[0]
         res = "char has been deleted - new selected char: " + next_selected
 
     conn.commit()

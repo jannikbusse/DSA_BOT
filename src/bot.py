@@ -33,7 +33,8 @@ def parse_attribute_input(s):
         print(res)
         return(at,res[0], res[1], res[2])
 
-    if re.match(r'\A[a-zA-Z]+\Z',s):
+    if re.match(r'\A[a-zA-Z | - | _]+\Z',s):
+        print("ASDASDASD")
         return (s, "","","")
 
     return None

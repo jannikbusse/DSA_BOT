@@ -79,7 +79,7 @@ def is_sanitized_input(st):
     return (len(x) <= 0)
 
 def roll_dice(sides):
-    return random.randint(0, max(0, sides))
+    return random.randint(1, max(1, sides))
 
 def parse_atomic(s):
     global no_errors

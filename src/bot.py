@@ -38,7 +38,7 @@ def parse_attribute_input(s):
 
 
 def send_message(channel,content):
-    n = 1000
+    n = 1600
     msgs = [content[i:i+n] for i in range(0, len(content), n)]
     for msg in msgs:
         glob_vars.send_message(channel, msg)
@@ -46,7 +46,7 @@ def send_message(channel,content):
 
 def command_register(message, args):
     if(len(args) < 1):
-        send_message(message.channel, "too few arguments!")
+        send_message(message.channel, "Too few arguments!")
         return
     charname = args[0]
     charNumber = len(db.db_get_char_list(message.author))
@@ -219,6 +219,10 @@ def command_rename(message, args):#FIX DATABASE FIRST!!
     success = db.db_rename_character(currentName, message.author, newName)
     send_message(message.channel, success)
 
+def command_help(message, args):
+    send_message(message.channel, glob_vars.HELP_MESSAGE)
+
+
 
 def parse_msg(message):
     prefix = db.db_get_prefix(message.guild)
@@ -270,6 +274,9 @@ def parse_msg(message):
 
     elif(s.startswith("rename")):#FIX DATABASE FIRST!!
         command_rename(message, args)
+
+    elif(s.startswith("help")):
+        command_help(message, args)
 
         
 

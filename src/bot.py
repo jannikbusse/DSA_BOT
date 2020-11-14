@@ -266,7 +266,7 @@ def parse_msg(message):
     elif(s.startswith("rd ")):
         command_rd(message, args)
 
-    elif(s.startswith("roll")): 
+    elif(s.startswith("r")): 
         command_roll(message,s ,args)
 
     elif(s.startswith("prefix")):

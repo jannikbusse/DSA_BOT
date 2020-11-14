@@ -33,7 +33,7 @@ async def on_message(message):
         return       
     glob_vars.send_bot_receive_queue(message)
     
-@tasks.loop(seconds=0.2)
+@tasks.loop(seconds=0.05)
 async def loop():
     if glob_vars.terminate:
         exit() # not a clean way to exit!

@@ -296,7 +296,7 @@ def start_bot():
     logging.info("Started bot!")
     db.init_db()
     while(not glob_vars.terminate):
-        time.sleep(0.2)
+        time.sleep(0.05)
         check_queue()
         
 

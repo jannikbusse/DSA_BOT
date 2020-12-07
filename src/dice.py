@@ -68,8 +68,8 @@ def simulate_dice(st):
     no_errors = True
     if not is_sanitized_input(st):
         return "numbers are too big!"
-    r, r_print = parse_dice(st)
-    res = parse_eq(r)
+    calc_string, r_print = parse_dice(st)
+    res = parse_eq(calc_string)
     if not no_errors:
         return "Error in string! Could not parse.."
     return "Results:" + r_print + " =\n **" + str(res)+"**"
@@ -91,34 +91,70 @@ def parse_atomic(s):
         no_errors = False
         return 0
 
-def parse_dice(s):
-    global no_errors
-    s_print = s
-    p = re.compile("[0-9]*w[0-9]*")
-    for m in p.finditer(s):
-        left = s[:m.start()]
-        right = s[m.start() + len(m.group()):]
-        mid = str(m.group())
-        pre, post = re.compile(r'w').split(mid)
-        if pre == "":
-            pre = 1
-        if int(pre) > 999: #dont let ppl roll too often!
-            pre = 0
-            no_errors = False
-        if post == "":
-            post = 20
-        total = 0
-        total_print = ""
-        for i in range(int(pre)):
-            d_res = roll_dice(int(post))
-            total += d_res
-            total_print = total_print +  "**" + str(d_res) + "**"
-            if not i == int(pre)-1:
-                total_print += " + "
-        s = left + "( " + str(total) + " ) " + right
-        s_print = left + " [ " + str(total_print) + " ] " + right
+def parse_atomic_dice(s):
+    pre, post = re.compile(r'w').split(s)
+    if pre == "":
+        pre = 1
+    if int(pre) > 999: #dont let ppl roll too often!
+        pre = 0
+        no_errors = False
+    if post == "":
+        post = 20
+    pre = int(pre)
+    post = int(post)
+    
+    return (pre,post)
 
-    return (s,s_print)
+def parse_first_dice(s, pretty_s):
+    p = re.compile("[0-9]*w[0-9]*")
+    match = re.search("[0-9]*w[0-9]*", pretty_s)
+    if(match == None):
+        return (False,s,pretty_s)
+    left = pretty_s[0:match.start()]
+    right = pretty_s[match.end():]
+    mid = pretty_s[match.start():match.end()]
+
+    (coefficient, dice_max) = parse_atomic_dice(mid)
+
+    dice_list = ""
+    for c in range(coefficient):
+        d = roll_dice(dice_max)
+        dice_list += "**"+str(d)+"**" 
+        if c < coefficient - 1 :
+            dice_list += " + "
+    dice_list = "[ " + dice_list+ " ]"
+    pretty_string = left + " " + dice_list + " " + right
+
+    #PARSE NORMAL STRING------------ (i know its terrible..)
+
+    p = re.compile("[0-9]*w[0-9]*")
+    match = re.search("[0-9]*w[0-9]*", s)
+    if(match == None):
+        return (False,s,pretty_s)
+    left = s[0:match.start()]
+    right = s[match.end():]
+    mid = s[match.start():match.end()]
+
+    (coefficient, dice_max) = parse_atomic_dice(mid)
+
+    dice_list = ""
+    for c in range(coefficient):
+        d = roll_dice(dice_max)
+        dice_list += str(d)
+        if c < coefficient - 1 :
+            dice_list += " + "
+    dice_list = "( " + dice_list+ " )"
+    s = left + " " + dice_list + " " + right
+
+    return (True,s,pretty_string)
+
+def parse_dice(s):
+    pretty_res = s
+    res = s
+    keep_rolling = True
+    while keep_rolling:
+        keep_rolling, res, pretty_res = parse_first_dice(res, pretty_res)
+    return (res,pretty_res)
 
 def parse_eq(s): 
     global no_errors

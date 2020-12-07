@@ -152,6 +152,7 @@ def command_select(message, args):
     send_message(message.channel, success)
 
 def command_roll(message, s, args):
+    s = helper.remove_prefix(s, "roll")
     s = helper.remove_prefix(s, "r")
     if(len(args) < 1):
         s = "w20"

@@ -117,11 +117,14 @@ def parse_first_dice(s, pretty_s):
     (coefficient, dice_max) = parse_atomic_dice(mid)
 
     dice_list = ""
+    dice_list_calc = ""
     for c in range(coefficient):
         d = roll_dice(dice_max)
         dice_list += "**"+str(d)+"**" 
+        dice_list_calc += str(d)
         if c < coefficient - 1 :
             dice_list += " + "
+            dice_list_calc += "+"
     dice_list = "[ " + dice_list+ " ]"
     pretty_string = left + " " + dice_list + " " + right
 
@@ -135,16 +138,8 @@ def parse_first_dice(s, pretty_s):
     right = s[match.end():]
     mid = s[match.start():match.end()]
 
-    (coefficient, dice_max) = parse_atomic_dice(mid)
-
-    dice_list = ""
-    for c in range(coefficient):
-        d = roll_dice(dice_max)
-        dice_list += str(d)
-        if c < coefficient - 1 :
-            dice_list += " + "
-    dice_list = "( " + dice_list+ " )"
-    s = left + " " + dice_list + " " + right
+    dice_list_calc = "( " + dice_list_calc+ " )"
+    s = left + " " + dice_list_calc + " " + right
 
     return (True,s,pretty_string)
 

@@ -83,6 +83,8 @@ def roll_dice(sides):
 
 def parse_atomic(s):
     global no_errors
+    s = s.replace("_","-")
+    s = s.replace(" ","")
     try: 
         int(s)
         return int(s)
@@ -178,7 +180,7 @@ def parse_eq(s):
     elif operator == '+' :
         return parse_eq(left) + parse_eq(right)
     elif operator == '-' :
-        return parse_eq(left) - parse_eq(right)
+        return parse_eq(left) + parse_eq("_"+right)
     elif operator ==')':
         if not '(' in left:
             no_errors = False
